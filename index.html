@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="圆圆托管">
+<meta name="theme-color" content="#ffb300">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23ffb300'/%3E%3Cpath d='M32 8l6.5 13.2L53 23.3l-10.5 8.8L45.5 47 32 40l-13.5 7 1-14.9L11 23.3l14.5-2.1z' fill='%23fff8e6'/%3E%3Ccircle cx='26' cy='28' r='2' fill='%233d2b00'/%3E%3Ccircle cx='38' cy='28' r='2' fill='%233d2b00'/%3E%3Cpath d='M28 34c0 0 2 2 4 2s4-2 4-2' stroke='%233d2b00' stroke-width='1.2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ffb300'/%3E%3Cpath d='M32 10l5.5 11.3L51 23.2 42 30.5l2 13.5L32 37l-12 7 2-13.5-9-7.3 11.5-1.9z' fill='%23fff8e6'/%3E%3C/svg%3E">
+<title>圆圆专属托管工作台</title>
+<!-- 圆圆专属托管工作台 · 单文件 HTML 方案：数据存本机 localStorage，支持导出/导入备份；手机浏览器打开后可添加到主屏幕当 App 用 -->
+<style>
+:root{
+  --primary:#f5a623;
+  --primary-soft:#fff5e0;
+  --primary-dark:#e08e0b;
+  --orange:#ff7043;
+  --orange-soft:#fff0e8;
+  --red:#e5484d;
+  --red-soft:#ffebec;
+  --green:#66bb6a;
+  --green-soft:#eaf7e9;
+  --text:#4a3728;
+  --text-2:#7a6550;
+  --text-3:#a89880;
+  --line:#f5ebe0;
+  --bg:#faf6f0;
+  --card:#ffffff;
+  --radius:20px;
+  --shadow:0 2px 12px rgba(120,80,40,.08);
+  --nav-bg:#fff8ee;
+  --nav-active:#fef0d5;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Roboto,sans-serif;
+  background-color:var(--bg);
+  color:var(--text);font-size:15px;line-height:1.6;
+}
+button{font-family:inherit;font-size:15px;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
+.svgi{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.wrap{max-width:1080px;margin:0 auto;padding:0 14px}
+
+/* ---------- header ---------- */
+.topbar{background:linear-gradient(135deg,#ffb300,#ff8c00);color:#fff;padding:14px 0 16px;padding-top:calc(14px + env(safe-area-inset-top));box-shadow:0 4px 20px rgba(255,179,0,.3)}
+.topbar .wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:8px;font-size:19px;font-weight:700;letter-spacing:.5px}
+.logo .badge{width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center}
+.appname{cursor:pointer}
+.rename-btn{width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;color:#fff;margin-left:2px}
+.rename-btn:hover{background:rgba(255,255,255,.35)}
+#formAvatar{cursor:pointer}
+.spacer{flex:1}
+.sync-pill{display:flex;align-items:center;gap:6px;font-size:12px;background:rgba(255,255,255,.18);padding:5px 10px;border-radius:20px}
+.dot{width:7px;height:7px;border-radius:50%;background:#7ee2a8}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.tool-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);color:#fff;
+  padding:8px 12px;border-radius:10px;font-size:13px;min-height:36px}
+.tool-btn:hover{background:rgba(255,255,255,.3)}
+/* ---------- date bar (日期色块) ---------- */
+.datebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--card);
+  border-radius:18px;box-shadow:var(--shadow);padding:10px 12px;margin-top:12px}
+.date-info{flex:1 1 auto;min-width:0;line-height:1.3;padding:2px 0}
+.date-info .di-main{font-size:15px;font-weight:700;color:var(--text);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.date-info .di-sub{font-size:12px;color:var(--text-3);margin-top:2px}
+.date-pick{position:relative;width:40px;height:40px;border-radius:12px;background:#fff8e6;
+  color:#e69500;display:flex;align-items:center;justify-content:center;flex:none;cursor:pointer;
+  box-shadow:inset 0 0 0 1px #f5e3b8;overflow:hidden}
+.date-pick:active{background:#ffeccb;transform:scale(.96)}
+.date-pick .svgi{width:20px;height:20px}
+.date-pick input[type=date]{position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;
+  border:none;background:transparent;padding:0;margin:0;cursor:pointer;color:transparent;
+  font-size:16px;-webkit-appearance:none;appearance:none}
+.date-pick input[type=date]::-webkit-calendar-picker-indicator{position:absolute;left:0;top:0;
+  width:100%;height:100%;opacity:0;margin:0;padding:0;cursor:pointer}
+.date-pick input[type=date]::-webkit-datetime-edit{display:none}
+.nav-date{width:38px;height:38px;border-radius:13px;background:#fff8e6;color:var(--text-2);
+  display:flex;align-items:center;justify-content:center;flex:none}
+.nav-date:active{background:#ffeccb;color:var(--text)}
+
+/* ---------- generic ---------- */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-top:12px}
+.sec-title{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700;margin:0 0 10px}
+.sec-title .svgi{color:var(--primary)}
+.sub{color:var(--text-3);font-size:12px;font-weight:400}
+.tip{background:#fff8e6;color:#8d5e00;border-radius:12px;padding:9px 12px;font-size:13px;display:flex;gap:8px;align-items:flex-start;margin-top:12px}
+.tip .svgi{color:#e69500;margin-top:2px}
+
+/* ---------- side nav 侧边栏（品牌 + 导航 + 工具） ---------- */
+.side-nav{width:120px;flex-shrink:0;background:rgba(255,248,238,.9);border-right:1px solid var(--line);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  position:fixed;left:0;top:0;bottom:0;z-index:80;overflow-y:auto;overscroll-behavior:contain;
+  display:flex;flex-direction:column;gap:6px;
+  padding:calc(14px + env(safe-area-inset-top)) 8px calc(14px + env(safe-area-inset-bottom));
+  box-shadow:2px 0 14px rgba(120,80,40,.05)}
+.side-brand{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;
+  padding:6px 6px 10px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.brand-avatar{width:54px;height:54px;border-radius:18px;background:#fff;flex:none;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow)}
+.brand-avatar img{width:100%;height:100%;object-fit:cover}
+.brand-text{min-width:0;width:100%}
+.brand-name{font-size:14px;font-weight:800;color:var(--text);cursor:pointer;line-height:1.3;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav-tabs{display:flex;flex-direction:column;gap:6px}
+.nav-tabs .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:5px;width:100%;height:62px;padding:8px 4px;border-radius:14px;background:transparent;
+  border:none;color:var(--text-2);cursor:pointer;font-size:13px;font-weight:600;
+  transition:background .18s,color .18s,transform .12s}
+.nav-tabs .tab svg{width:20px;height:20px;flex:none}
+.nav-tabs .tab span{font-size:13px;line-height:1.2;text-align:center;max-width:100%;font-weight:600;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-tabs .tab.on{background:var(--nav-active);color:var(--primary-dark);
+  box-shadow:0 2px 10px rgba(245,166,35,.22)}
+.nav-tabs .tab:active{transform:scale(.98)}
+.side-tools{display:flex;flex-direction:column;gap:4px;margin-top:auto;padding-top:10px;
+  border-top:1px solid var(--line)}
+.side-tools .tool{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;width:100%;height:56px;padding:7px 3px;border-radius:12px;background:transparent;
+  border:none;color:var(--text-2);cursor:pointer;font-size:12px;font-weight:600;
+  transition:background .18s,color .18s}
+.side-tools .tool svg{width:18px;height:18px;flex:none}
+.side-tools .tool span{font-size:12px;line-height:1.2;text-align:center;max-width:100%;font-weight:600;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side-tools .tool:hover{background:#fff3dd;color:var(--primary-dark)}
+.side-tools .tool.danger:hover{background:var(--red-soft);color:var(--red)}
+.side-foot{padding:10px 6px 0;border-top:1px solid var(--line);margin-top:6px;
+  color:var(--text-3);font-size:11px;line-height:1.5}
+.sf-line{color:var(--text-2);font-weight:700;margin-bottom:2px}
+.main-content{flex:1;margin-left:120px;min-width:0;max-width:100%;min-height:100vh;
+  background-color:var(--bg);
+  background-image:linear-gradient(180deg,rgba(255,252,247,.52),rgba(255,248,232,.64)),url('bg2.jpg');
+  background-repeat:no-repeat;background-position:center center;
+  background-size:cover;background-attachment:fixed}
+.content-inner{max-width:960px;margin:0 auto;padding:18px 16px 28px}
+.panel{display:none}
+.panel.on{display:block}
+
+/* ---------- student grid ---------- */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+.stu{background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:12px;position:relative;
+  display:flex;align-items:center;gap:12px;cursor:grab;overflow:hidden;border:2px solid transparent;
+  transition:transform .16s,box-shadow .16s,border-color .16s}
+.stu:active{cursor:grabbing}
+.stu:hover{transform:translateY(-3px) rotate(-.4deg);box-shadow:0 10px 22px rgba(27,34,51,.14);border-color:var(--ava-soft,#ffe3ea)}
+.stu.dragging{opacity:.45}
+.stu.drop-hint{outline:2px dashed var(--primary);outline-offset:2px}
+.stu::after{content:'';position:absolute;right:-26px;top:-26px;width:80px;height:80px;border-radius:50%;
+  background:var(--ava-soft,#ffe3ea);opacity:.5;pointer-events:none}
+.avatar{width:60px;height:60px;border-radius:50%;background:var(--ava,#ff8fab);display:flex;
+  align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;overflow:hidden;flex:none;
+  border:3px solid #fff;box-shadow:0 0 0 3px var(--ava,#ff8fab),0 4px 10px rgba(27,34,51,.14)}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.ava-wrap{position:relative;flex:none;z-index:1}
+.ava-deco{position:absolute;right:-5px;bottom:-3px;width:23px;height:23px;border-radius:50%;background:#fff;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(27,34,51,.16)}
+.ava-deco .svgi{width:14px;height:14px;stroke:#e69500;fill:#ffe566}
+.info{flex:1;min-width:0;z-index:1}
+.stu .nm{font-size:18px;font-weight:800;line-height:1.25;display:flex;align-items:center;gap:6px;flex-wrap:wrap;letter-spacing:.5px}
+.grade-badge{font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--ava-soft,#ffe3ea);color:#5a6478;letter-spacing:0}
+.stu .meta{font-size:12px;color:var(--text-2);margin-top:3px}
+.stu .trait{display:inline-block;font-size:11px;font-weight:600;background:#fff5d6;color:#a8781f;padding:2px 9px;border-radius:20px;
+  margin-top:5px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stu-ops{position:absolute;top:7px;right:7px;display:flex;gap:2px;z-index:3}
+.icon-btn{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--text-3);background:rgba(255,255,255,.86)}
+.icon-btn:hover{background:#fff8e6;color:var(--text)}
+.icon-btn.danger:hover{background:#ffebee;color:var(--red)}
+.move-row{position:absolute;bottom:7px;right:7px;display:flex;gap:4px;z-index:3}
+.move-btn{width:28px;height:28px;border-radius:9px;background:#fff8e6;color:var(--text-2);display:flex;align-items:center;justify-content:center}
+.move-btn:disabled{opacity:.3}
+.mini-dots{display:flex;gap:4px;margin-top:6px}
+.mini-dots i{width:8px;height:8px;border-radius:50%;background:#f0e4c8;display:block}
+.mini-dots i.ok{background:#66bb6a;box-shadow:0 0 4px rgba(102,187,106,.5)}
+.legend{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:14px;font-size:12px;color:var(--text-3);padding:0 2px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:7px;height:7px;border-radius:50%;background:#e2e7f2;display:block}
+.legend i.ok{background:var(--green)}
+.legend .lg-tip{margin-left:auto}
+.add-stu{display:flex;align-items:center;justify-content:center;gap:8px;border:3px dashed #ffd0dd;
+  border-radius:22px;min-height:98px;color:#ff7fa4;font-weight:700;background:#fffafb;cursor:pointer;width:100%}
+.add-stu:hover{border-color:#ff8fab;background:#fff0f4}
+
+/* ---------- forms ---------- */
+.field{margin-bottom:12px}
+.field label{display:block;font-size:13px;color:var(--text-2);margin-bottom:5px;font-weight:600}
+.hint{font-size:12px;color:var(--text-3);margin:2px 0 14px;line-height:1.5}
+.field input[type=text],.field input[type=date],.field select,.field textarea{
+  width:100%;border:1px solid var(--line);border-radius:11px;padding:10px 12px;background:#fbfcfe;outline:none;min-height:44px}
+.field textarea{min-height:76px;resize:vertical;line-height:1.6}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:#ffb300;background:#fff8e6}
+.stu-pick{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.stu-pick select{flex:1;min-width:160px;border:1px solid var(--line);border-radius:11px;padding:9px 10px;background:#fbfcfe;min-height:44px}
+.chip-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;width:100%}
+.chip{flex:none;padding:7px 12px;border-radius:20px;background:#f2f5fb;color:var(--text-2);font-size:13px;min-height:36px;border:1px solid transparent}
+.chip.on{background:#fff3cd;color:#8d5e00;border-color:#ffb300;font-weight:700;box-shadow:0 2px 6px rgba(255,179,0,.2)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border-radius:12px;padding:11px 16px;
+  font-size:15px;min-height:44px;font-weight:600}
+.btn-pri{background:linear-gradient(135deg,#ffb300,#ff9500);color:#fff;width:100%;box-shadow:0 3px 10px rgba(255,179,0,.3)}
+.btn-orange{background:linear-gradient(135deg,#ff7043,#ff5722);color:#fff;width:100%}
+.btn-ghost{background:#fff8e6;color:var(--text-2)}
+.btn-danger{background:var(--red-soft);color:var(--red)}
+.btn-sm{padding:8px 12px;min-height:38px;font-size:13px;width:auto}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+/* ---------- grades table ---------- */
+.gd-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+.gd-table th,.gd-table td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line)}
+.gd-table th{color:var(--text-3);font-weight:600;background:#fff8e6}
+.gd-table td:first-child,.gd-table th:first-child{text-align:left;color:var(--text);font-weight:600}
+.gd-table thead tr:first-child th{font-size:13px;color:#e69500}
+#gdSummary{overflow-x:auto}
+/* ---------- modal ---------- */
+.mask{position:fixed;inset:0;background:rgba(15,20,35,.5);display:none;align-items:flex-end;justify-content:center;z-index:90;padding:0}
+.mask.on{display:flex}
+.modal{background:#fff;width:100%;max-width:560px;border-radius:20px 20px 0 0;max-height:92vh;overflow:auto;
+  padding:16px 16px calc(18px + env(safe-area-inset-bottom));animation:up .22s ease}
+@keyframes up{from{transform:translateY(30px);opacity:.4}to{transform:translateY(0);opacity:1}}
+.modal-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.modal-head h3{margin:0;font-size:17px;flex:1}
+.close-btn{width:34px;height:34px;border-radius:10px;background:#f2f5fb;display:flex;align-items:center;justify-content:center;color:var(--text-2)}
+.modal-actions{display:flex;gap:10px;margin-top:14px}
+.modal-actions .btn{flex:1}
+@media(min-width:720px){
+  .mask{align-items:center}
+  .modal{border-radius:20px;max-height:88vh}
+}
+
+/* detail modal */
+.d-hero{display:flex;gap:14px;align-items:center;background:var(--ava-soft,#eaf0ff);border-radius:18px;padding:14px}
+.d-hero .avatar{width:70px;height:70px;font-size:26px}
+.d-hero h2{margin:0 0 3px;font-size:20px}
+.d-hero p{margin:0;font-size:13px;color:var(--text-2)}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.kv div{background:#fafbfe;border-radius:12px;padding:9px 11px}
+.kv span{display:block;font-size:12px;color:var(--text-3)}
+.kv b{font-size:15px}
+.dsec{margin-top:14px}
+.dsec h4{margin:0 0 6px;font-size:14px;display:flex;align-items:center;gap:6px}
+.dsec h4 .svgi{width:16px;height:16px;color:var(--primary)}
+.dsec p{margin:0;background:#fafbfe;border-radius:12px;padding:10px 12px;font-size:14px;white-space:pre-wrap;word-break:break-word}
+.hw2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.hw-card{border-radius:14px;padding:11px 12px;border:1px solid var(--line)}
+.hw-card.hw-cn{background:#fff8e6;border-color:#ffe082}
+.hw-card.hw-math{background:#e8f5e9;border-color:#a5d6a7}
+.hw-head{display:flex;align-items:center;gap:6px;font-weight:700;font-size:13px;margin-bottom:7px}
+.hw-cn .hw-head{color:#c67c00}
+.hw-math .hw-head{color:#43a047}
+.hw-head .svgi{width:16px;height:16px}
+.hw-body{font-size:14px;line-height:1.55;color:var(--text);white-space:pre-wrap;word-break:break-word}
+.hw-empty{color:var(--text-3);font-size:13px;font-style:italic}
+@media(max-width:560px){.hw2{grid-template-columns:1fr}}
+.week{display:flex;gap:5px;margin-top:8px}
+.week div{flex:1;text-align:center}
+.week i{display:block;height:26px;border-radius:8px;background:#eef1f8;margin-bottom:3px}
+.week i.ok{background:var(--green)}
+.week i.half{background:#ffd9a0}
+.week span{font-size:10px;color:var(--text-3)}
+
+/* image preview */
+.img-box{text-align:center}
+.img-box img{width:100%;max-width:320px;border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,.15);display:block;margin:0 auto}
+.img-tip{font-size:12px;color:var(--text-3);margin-top:10px}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(28px + env(safe-area-inset-bottom));
+  background:rgba(20,26,42,.92);color:#fff;padding:10px 18px;border-radius:22px;font-size:14px;z-index:200;opacity:0;
+  transition:opacity .2s;pointer-events:none;max-width:86%;text-align:center}
+.toast.on{opacity:1}
+
+.foot{text-align:center;color:var(--text-3);font-size:12px;padding:18px 0 8px}
+
+/* exam management */
+.exam-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+.exam-list{display:flex;gap:6px;flex-wrap:wrap;flex:1;min-width:0}
+.exam-item{display:inline-flex;align-items:center;gap:6px;background:#fff8e6;border-radius:20px;padding:4px 4px 4px 12px;font-size:13px}
+.exam-item-name{font-weight:600;color:var(--text)}
+.exam-item-ops{display:flex;gap:2px}
+.exam-mini{font-size:12px;padding:4px 9px;border-radius:12px;background:#fff;color:var(--text-2);min-height:28px}
+.exam-mini:hover{background:#fff3cd;color:#8d5e00}
+.exam-mini.danger:hover{background:var(--red-soft);color:var(--red)}
+.d-stat{margin:8px 0 0;font-size:13px;color:#8d5e00;background:#fff8e6;border-radius:20px;padding:8px 14px;border:1px solid #ffe082}
+.d-stat b{color:#e69500;font-size:15px}
+
+
+.star-deco{position:absolute;pointer-events:none;opacity:.12;z-index:0}
+.star-deco.sm{width:14px;height:14px}
+.star-deco.md{width:22px;height:22px}
+.star-deco.lg{width:32px;height:32px}
+.bg-sparkle{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:0;overflow:hidden}
+.bg-sparkle .star{position:absolute;border-radius:50%;background:rgba(255,179,0,.12)}
+.star-deco-lg,.star-deco-sm{animation:float 6s ease-in-out infinite}
+.star-deco-sm{animation-delay:-3s}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@media(max-width:768px){
+  .star-deco-lg,.star-deco-sm{display:none}
+}
+
+/* skin picker */
+.skin-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px}
+.skin-label{font-size:12px;color:var(--text-3)}
+.skin-btn{width:32px;height:32px;border-radius:50%;border:2px solid transparent;background:var(--bg);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.skin-btn:hover{transform:scale(1.15)}
+.skin-btn.on{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-soft)}
+.skin-btn svg{width:100%;height:100%}
+/* ---------- responsive ---------- */
+@media(max-width:900px){
+  .grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .stu{padding:10px;gap:10px}
+  .avatar{width:52px;height:52px;font-size:21px}
+  .stu .nm{font-size:16px}
+  .ava-deco{width:20px;height:20px}
+  .side-nav{width:100px;padding:12px 6px}
+  .side-brand{padding:4px 0 8px;gap:6px}
+  .brand-avatar{width:42px;height:42px;border-radius:14px}
+  .brand-name{font-size:12.5px}
+  .nav-tabs .tab{height:58px;gap:4px}
+  .nav-tabs .tab svg{width:19px;height:19px}
+  .nav-tabs .tab span{font-size:12px}
+  .side-tools .tool{height:52px;gap:3px}
+  .side-tools .tool svg{width:17px;height:17px}
+  .side-tools .tool span{font-size:11.5px}
+  .side-foot{display:none}
+  .main-content{margin-left:100px}
+  .content-inner{padding:16px 12px 26px}
+}
+/* 手机竖屏 */
+@media(max-width:720px){
+  .grid{grid-template-columns:1fr}
+  .stu{padding:12px;gap:12px}
+  .avatar{width:60px;height:60px;font-size:25px}
+  .stu .nm{font-size:18px}
+  .side-nav{width:84px;padding:10px 4px;gap:6px}
+  .brand-avatar{width:38px;height:38px;border-radius:13px}
+  .brand-name{font-size:12px}
+  .nav-tabs{gap:6px}
+  .nav-tabs .tab{height:56px;gap:3px;border-radius:13px}
+  .nav-tabs .tab svg{width:19px;height:19px}
+  .nav-tabs .tab span{font-size:11.5px}
+  .side-tools{gap:4px;padding-top:8px}
+  .side-tools .tool{height:50px;gap:3px;border-radius:11px}
+  .side-tools .tool svg{width:16px;height:16px}
+  .side-tools .tool span{font-size:11px}
+  .main-content{margin-left:84px}
+  .content-inner{padding:14px 12px 28px}
+  .card{padding:12px;border-radius:16px}
+  .row3{grid-template-columns:1fr}
+  .kv{grid-template-columns:1fr}
+  .datebar{gap:8px;padding:9px 10px;border-radius:16px}
+  .date-info .di-main{font-size:14px}
+  .modal{max-height:94vh}
+  .legend{font-size:12px}
+}.modal{max-height:94vh}
+  .legend{font-size:12px}
+}
+/* 小屏手机 */
+@media(max-width:400px){
+  .side-nav{width:72px;padding:8px 3px;gap:6px}
+  .brand-avatar{width:34px;height:34px;border-radius:12px}
+  .brand-name{font-size:11px}
+  .nav-tabs .tab{height:54px;gap:3px}
+  .nav-tabs .tab svg{width:18px;height:18px}
+  .nav-tabs .tab span{font-size:11px}
+  .side-tools .tool{height:48px;gap:3px}
+  .side-tools .tool svg{width:15px;height:15px}
+  .side-tools .tool span{font-size:10px}
+  .main-content{margin-left:72px}
+  .content-inner{padding:12px 8px 24px}
+  .content-inner{padding:12px 8px 24px}
+  .datebar{gap:6px}
+
+
+  .grid{gap:9px}
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <!-- 左侧边栏：工作台信息 + 导航 + 工具 -->
+  <aside class="side-nav" id="sideNav">
+    <div class="side-brand">
+      <div class="brand-avatar" id="navAvatar" title="点击更换头像">
+        <svg viewBox="0 0 64 64" style="width:100%;height:100%"><circle cx="32" cy="32" r="28" fill="#ffb300"/><path d="M32 10l5 10 11 2-8 7 2 11-10-5-10 5 2-11-8-7 11-2z" fill="#ff8c00"/><circle cx="26" cy="28" r="2" fill="#fff"/><circle cx="38" cy="28" r="2" fill="#fff"/><path d="M28 34c0 0 2 3 4 3s4-3 4-3" stroke="#fff" stroke-width="1.5" fill="none"/></svg>
+      </div>
+      <div class="brand-text">
+        <div class="brand-name" id="appName" title="点击修改名称">圆圆</div>
+      </div>
+    </div>
+
+    <nav class="nav-tabs" id="tabs">
+      <button class="tab on" data-tab="students">
+        <svg class="svgi" viewBox="0 0 24 24"><path d="M12 2l2.5 5.3L20 8.2l-4 3.9.9 5.6L12 15.4 6.1 17.7l.9-5.6-4-3.9 5.5-.9z" fill="#f5a623" stroke="currentColor" stroke-width="1.2"/><circle cx="9" cy="15" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M9 17.5v3M7 20h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>学生</span>
+      </button>
+      <button class="tab" data-tab="homework">
+        <svg class="svgi" viewBox="0 0 24 24"><rect x="3" y="6" width="15" height="14" rx="2" fill="#fff8e6" stroke="currentColor" stroke-width="1.5"/><path d="M3 10h15M7 6V3M14 6V3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="19" cy="8" r="3.5" fill="#f5a623" stroke="currentColor" stroke-width="1.2"/></svg>
+        <span>作业</span>
+      </button>
+      <button class="tab" data-tab="grades">
+        <svg class="svgi" viewBox="0 0 24 24"><path d="M12 2l3 6.5L22 9.5l-5 4.5 1.5 6.5L12 17l-6.5 2.5L7 14 2 9.5l7-1z" fill="#f5a623" stroke="currentColor" stroke-width="1.2"/></svg>
+        <span>成绩</span>
+      </button>
+    </nav>
+
+    <div class="side-tools">
+      <button class="tool" id="btnSkin" title="更换主题">
+        <svg class="svgi" viewBox="0 0 24 24"><path d="M12 3l2.5 5.3L20 9.2l-4 3.9.9 5.6L12 15.4 6.1 17.7l.9-5.6-4-3.9 5.5-.9z" fill="currentColor" stroke="currentColor" stroke-width="1.2"/></svg>
+        <span>更换主题</span>
+      </button>
+      <button class="tool" id="btnExport" title="导出备份">
+        <svg class="svgi" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>导出备份</span>
+      </button>
+      <button class="tool" id="btnImport" title="导入恢复">
+        <svg class="svgi" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M4 21h16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>导入恢复</span>
+      </button>
+      <button class="tool danger" id="btnWipe" title="清空全部数据">
+        <svg class="svgi" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+        <span>清空数据</span>
+      </button>
+    </div>
+
+    <div class="side-foot">
+      <div class="sf-line" id="sfStat">—</div>
+      <div class="sf-tip">数据存本机浏览器，记得定期导出</div>
+    </div>
+
+    <input type="file" id="fileNavAvatar" accept="image/*" style="display:none">
+    <input type="file" id="fileImport" accept="application/json,.json" style="display:none">
+  </aside>
+
+  <!-- 右侧内容区 -->
+  <main class="main-content">
+    <div class="content-inner">
+      <div id="backupTip"></div>
+      <div class="datebar">
+        <button class="nav-date" id="prevDay" title="上一天"><svg class="svgi" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
+        <div class="date-info">
+          <div class="di-main" id="dbMain">9月9日 · 星期三</div>
+          <div class="di-sub" id="dbSub">今天</div>
+        </div>
+        <div class="date-pick" id="datePickBtn" title="选择日期">
+          <svg class="svgi" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 10h18" stroke="currentColor" stroke-width="1.6"/><path d="M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="8" cy="15" r="1" fill="currentColor"/><circle cx="12" cy="15" r="1" fill="currentColor"/><circle cx="16" cy="15" r="1" fill="currentColor"/></svg>
+          <input type="date" id="datePick">
+        </div>
+        <button class="nav-date" id="nextDay" title="下一天"><svg class="svgi" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
+      </div>
+      <div id="panelsWrapper">
+  <!-- 学生 -->
+  <section class="panel on" id="panel-students">
+    <div class="legend">
+      <span><i class="ok"></i>已录作业</span>
+      <span><i class="ok"></i>已录成绩</span>
+      <span class="lg-tip">灰点=未完成 · 卡片可拖拽换位，点卡片看详情</span>
+    </div>
+    <div class="grid" id="stuGrid"></div>
+  </section>
+
+  <!-- 作业 -->
+  <section class="panel" id="panel-homework">
+    <div class="card">
+      <h3 class="sec-title"><svg class="svgi" viewBox="0 0 24 24"><rect x="3" y="6" width="15" height="14" rx="2" fill="#fff8e6" stroke="currentColor" stroke-width="1.5"/><path d="M3 10h15M7 6V3M14 6V3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="19" cy="8" r="3" fill="#ffb300" stroke="currentColor" stroke-width="1"/></svg>作业录入 <span class="sub" id="hwDateTxt"></span></h3>
+      <div id="hwDayHint"></div>
+      <div class="chip-row" id="hwChips"></div>
+      <div class="field" style="margin-top:12px">
+        <label>语文作业</label>
+        <textarea id="hwChinese" placeholder="例：抄写第3课生字 2 遍 + 背诵《山行》"></textarea>
+      </div>
+      <div class="field">
+        <label>数学作业</label>
+        <textarea id="hwMath" placeholder="例：口算本 P12、练习册 P8-9"></textarea>
+      </div>
+      <button class="btn btn-pri" id="btnSaveHw"><svg class="svgi" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>保存今日作业</button>
+    </div>
+  </section>
+
+  <!-- 成绩 -->
+  <section class="panel" id="panel-grades">
+    <div class="card">
+      <h3 class="sec-title"><svg class="svgi" viewBox="0 0 24 24"><path d="M12 2l3 6.5L22 9.5l-5 4.5 1.5 6.5L12 17l-6.5 2.5L7 14 2 9.5l7-1z" fill="#ffb300" stroke="currentColor" stroke-width="1.2"/></svg>学生成绩录入</h3>
+      <div class="chip-row" id="gdChips"></div>
+      <p class="hint" style="margin-top:12px">选择学生后，录入各场考试的语文、数学分数（0–100）。考试类型可自定义：新建、重命名或删除。</p>
+      <div class="exam-bar">
+        <div class="exam-list" id="examManage"></div>
+        <button class="btn btn-ghost btn-sm" id="btnAddExam">＋ 新建考试类型</button>
+      </div>
+      <div id="gdForm"></div>
+      <button class="btn btn-pri" id="btnSaveGd"><svg class="svgi" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>保存成绩</button>
+    </div>
+    <div class="card">
+      <h3 class="sec-title"><svg class="svgi" viewBox="0 0 24 24"><path d="M12 2l3 6.5L22 9.5l-5 4.5 1.5 6.5L12 17l-6.5 2.5L7 14 2 9.5l7-1z" fill="#ffe566" stroke="#ffb300" stroke-width="1.2"/></svg>各学生成绩汇总</h3>
+      <div id="gdSummary"></div>
+    </div>
+  </section>
+      </div>
+      <p class="foot"><span id="footName">圆圆</span> · ✨ 数据保存在本机浏览器，换设备请先「导出备份」。手机浏览器打开后：分享 → 添加到主屏幕，即可当 App 用。</p>
+    </div>
+  </main>
+</div>
+
+
+<!-- 学生表单 -->
+<div class="mask" id="maskStu">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="stuFormTitle">添加学生</h3>
+      <button class="close-btn" data-close><svg class="svgi" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="field">
+      <label>照片（可选，自动压缩）</label>
+      <div style="display:flex;gap:12px;align-items:center">
+        <div class="avatar" id="formAvatar" style="width:64px;height:64px;font-size:24px">+</div>
+        <div>
+          <button class="btn btn-ghost btn-sm" id="btnPickPhoto">选择照片</button>
+          <button class="btn btn-ghost btn-sm" id="btnClearPhoto" style="margin-top:6px">移除照片</button>
+          <input type="file" id="filePhoto" accept="image/*" style="display:none">
+        </div>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>姓名 *</label><input type="text" id="fName" placeholder="例：林小满"></div>
+      <div class="field"><label>年级</label><input type="text" id="fGrade" placeholder="例：三年级"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-close>取消</button>
+      <button class="btn btn-pri" id="btnSaveStu">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 学生详情 -->
+<div class="mask" id="maskDetail">
+  <div class="modal" id="detailBody"></div>
+</div>
+
+<!-- 改名 -->
+<div class="mask" id="maskRename">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>修改工作台名称</h3>
+      <button class="close-btn" data-close><svg class="svgi" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="field">
+      <label>工作台名称</label>
+      <input type="text" id="renameInput" placeholder="例如：圆圆" maxlength="4">
+    </div>
+    <p class="hint">名称会显示在页面标题、顶栏、导出的备份文件名和生成的反馈图片上，可随时修改。</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-close>取消</button>
+      <button class="btn btn-pri" id="btnSaveRename">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 通用确认 -->
+<div class="mask" id="maskConfirm">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-head"><h3 id="cfTitle">确认</h3></div>
+    <p id="cfMsg" style="margin:0;color:var(--text-2)"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-close>取消</button>
+      <button class="btn btn-danger" id="cfOk">确认</button>
+    </div>
+  </div>
+</div>
+
+<!-- 考试类型 -->
+<div class="mask" id="maskExam">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-head">
+      <h3 id="examModalTitle">新建考试类型</h3>
+      <button class="close-btn" data-close><svg class="svgi" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="field">
+      <label>考试类型名称</label>
+      <input type="text" id="examInput" maxlength="10" placeholder="如：月考、单元测验">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-close>取消</button>
+      <button class="btn btn-pri" id="examOk">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- 皮肤选择 -->
+<div class="mask" id="maskSkin">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head">
+      <h3>选择主题</h3>
+      <button class="close-btn" data-close><svg class="svgi" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <p class="hint">选择星星人主题，点击后会刷新页面生效</p>
+    <div id="skinPicker" class="skin-picker-wrap"></div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-ghost" data-close>取消</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ============ 常量 & 工具 ============ */
+var KEY = 'wb_tuoguan_db_v1';
+var DB = null;
+var state = { date:'', tab:'students', curId:null, tone:'warm' };
+
+function $(id){ return document.getElementById(id); }
+function pad(n){ return n<10 ? '0'+n : ''+n; }
+function fmt(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function parseD(s){ var p=String(s).split('-'); return new Date(+p[0], (+p[1])-1, +p[2]); }
+function shiftDate(s, delta){ var d=parseD(s); d.setDate(d.getDate()+delta); return fmt(d); }
+function todayStr(){ return fmt(new Date()); }
+function cnDate(s){ var p=String(s).split('-'); return (+p[1])+'月'+(+p[2])+'日'; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function uid(){ return 's'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function initials(name){ return name ? String(name).trim().slice(0,1) : '学'; }
+var CANDY=[['#ffb300','#fff3cd'],['#ff8c00','#ffe8cc'],['#ffd700','#fff0b3'],['#ffa500','#ffe0b3'],['#ffcc00','#fff5cc'],['#ffe066','#fffae0']];
+function candy(i){ return CANDY[i % CANDY.length]; }
+
+/* ============ 星星人IP皮肤系统 ============ */
+var STAR_SKINS = [
+  { id:'default',  name:'星星默认', color:'#ffb300', body:'#ff9f4d', face:'#ffecd2', hat:'#ffb300' },
+  { id:'chef',     name:'小厨师',  color:'#ff6b6b', body:'#4ecdc4', face:'#ffecd2', hat:'#fff' },
+  { id:'balloon',  name:'气球星',  color:'#45b7d1', body:'#96ceb4', face:'#ffecd2', hat:'#45b7d1' },
+  { id:'gift',     name:'礼物星',  color:'#ff8e53', body:'#feca57', face:'#ffecd2', hat:'#ff8e53' },
+  { id:'dino',     name:'恐龙装',  color:'#52c41a', body:'#95e1d3', face:'#ffecd2', hat:'#52c41a' },
+  { id:'santa',    name:'圣诞星',  color:'#e74c3c', body:'#f39c12', face:'#ffecd2', hat:'#e74c3c' },
+  { id:'lantern',  name:'灯笼星',  color:'#e91e63', body:'#9c27b0', face:'#ffecd2', hat:'#e91e63' },
+  { id:'apple',    name:'苹果星',  color:'#ff5722', body:'#8bc34a', face:'#ffecd2', hat:'#ff5722' },
+  { id:'scared',   name:'惊吓星',  color:'#7b1fa2', body:'#e91e63', face:'#ffecd2', hat:'#7b1fa2' },
+  { id:'winter',   name:'冬日星',  color:'#0288d1', body:'#26a69a', face:'#ffecd2', hat:'#0288d1' },
+  { id:'clown',    name:'小丑星',  color:'#ab47bc', body:'#ff7043', face:'#ffecd2', hat:'#ab47bc' },
+  { id:'round',    name:'圆脸星',  color:'#fdd835', body:'#ff8a65', face:'#ffecd2', hat:'#fdd835' }
+];
+function getSkin(){ var k='wb_tuoguan_skin'; try{ return localStorage.getItem(k)||'default'; }catch(e){ return 'default'; } }
+function saveSkin(id){ try{ localStorage.setItem('wb_tuoguan_skin', id); }catch(e){} }
+function skinById(id){ for(var i=0;i<STAR_SKINS.length;i++) if(STAR_SKINS[i].id===id) return STAR_SKINS[i]; return STAR_SKINS[0]; }
+function skinColor(i){ var k=getSkin(); var sk=skinById(k); return [sk.color, sk.body]; }
+function starSvg(size, color, faceColor){
+  size=size||18;
+  faceColor=faceColor||'#ffecd2';
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="'+color+'"/><path d="M32 12l5 10 11 2-8 7 2 11-10-5-10 5 2-11-8-7 11-2z" fill="'+color+'" stroke="'+color+'" stroke-width="1"/><circle cx="32" cy="36" r="18" fill="'+faceColor+'"/><circle cx="26" cy="32" r="2.5" fill="#333"/><circle cx="38" cy="32" r="2.5" fill="#333"/><path d="M28 38c0 0 2 3 4 3s4-3 4-3" stroke="#333" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>';
+}
+function renderSkinPicker(){
+  var box=$('skinPicker'); if(!box) return;
+  var cur=getSkin(); var sk=skinById(cur);
+  var h='<div class="skin-row">';
+  h+='<span class="skin-label">主题:</span>';
+  for(var i=0;i<STAR_SKINS.length;i++){
+    var skn=STAR_SKINS[i];
+    var on=skn.id===cur?' on':'';
+    h+='<button class="skin-btn'+on+'" data-skin="'+skn.id+'" title="'+skn.name+'">'+starSvg(16, skn.color, skn.face)+'</button>';
+  }
+  h+='</div>';
+  box.innerHTML=h;
+  var btns=box.querySelectorAll('.skin-btn');
+  for(var j=0;j<btns.length;j++){
+    btns[j].addEventListener('click', function(){
+      var id=this.getAttribute('data-skin');
+      saveSkin(id);
+      location.reload();
+    });
+  }
+}
+function applySkinColors(){
+  var sk=skinById(getSkin());
+  document.documentElement.style.setProperty('--primary', sk.color);
+  document.documentElement.style.setProperty('--primary-soft', sk.body+'22');
+}
+function drawStarBoy(ctx,cx,cy,r,c1,c2){
+  // c1=body, c2=face
+  ctx.beginPath();
+  ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.fillStyle=c1; ctx.fill();
+  // 五颗星装饰
+  var stars=[[0,-r*0.7],[r*0.6,-r*0.2],[r*0.4,r*0.6],[-r*0.4,r*0.6],[-r*0.6,-r*0.2]];
+  for(var i=0;i<stars.length;i++){
+    ctx.beginPath();
+    var sx=cx+stars[i][0], sy=cy+stars[i][1];
+    ctx.arc(sx,sy,r*0.15,0,Math.PI*2);
+    ctx.fillStyle='#fff8'; ctx.fill();
+  }
+  // 脸
+  ctx.beginPath();
+  ctx.arc(cx,cy+r*0.1,r*0.65,0,Math.PI*2);
+  ctx.fillStyle=c2; ctx.fill();
+  // 眼睛
+  ctx.beginPath();
+  ctx.arc(cx-r*0.2,cy-r*0.05,r*0.08,0,Math.PI*2);
+  ctx.arc(cx+r*0.2,cy-r*0.05,r*0.08,0,Math.PI*2);
+  ctx.fillStyle='#333'; ctx.fill();
+  // 嘴巴
+  ctx.beginPath();
+  ctx.arc(cx,cy+r*0.15,r*0.15,0,Math.PI);
+  ctx.strokeStyle='#333'; ctx.lineWidth=r*0.04; ctx.stroke();
+}
+
+var toastTimer=null;
+function toast(msg){ var t=$('toast'); t.textContent=msg; t.classList.add('on');
+  clearTimeout(toastTimer); toastTimer=setTimeout(function(){ t.classList.remove('on'); }, 1900); }
+
+/* ============ 数据层 ============ */
+function blankDB(){
+  return { students:[], homework:{}, grades:{}, examTypes:['单元测试','期中考试','期末考试'], meta:{ created:todayStr(), name:'圆圆', demo:true } };
+}
+function appName(){ return (DB && DB.meta && DB.meta.name) ? DB.meta.name : '圆圆'; }
+function loadData(){
+  var raw=null;
+  try{ raw = localStorage.getItem(KEY); }catch(e){ raw=null; }
+  if(raw){
+    try{
+      var o=JSON.parse(raw);
+      if(o && o.students){ DB = o; DB.homework=DB.homework||{}; DB.grades=DB.grades||{}; DB.examTypes=DB.examTypes||['单元测试','期中考试','期末考试']; DB.meta=DB.meta||{}; return; }
+    }catch(e){ /* 损坏则重建 */ }
+  }
+  DB = blankDB();
+  seedDemo();
+  saveData();
+}
+function saveData(){
+  try{ localStorage.setItem(KEY, JSON.stringify(DB)); flashSync('本地存储 · 已保存'); }
+  catch(e){ flashSync('存储失败（空间不足？）'); toast('保存失败，建议先导出备份'); }
+}
+var syncTimer=null;
+function flashSync(txt){
+  var el=$('syncText'); if(!el) return;
+  el.textContent = txt;
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(function(){ el.textContent='本地存储 · 已保存'; }, 1600);
+}
+function recKey(id, date){ return id+'|'+date; }
+function getHW(id, date){ return DB.homework[recKey(id,date)] || {chinese:'',math:''}; }
+function getGrades(id){
+  var g = (DB.grades && DB.grades[id]) ? DB.grades[id] : {};
+  var out = {};
+  for(var i=0;i<DB.examTypes.length;i++){ var e=DB.examTypes[i]; out[e]=g[e]||{chinese:0,math:0}; }
+  return out;
+}
+function studentById(id){
+  for(var i=0;i<DB.students.length;i++){ if(DB.students[i].id===id) return DB.students[i]; }
+  return null;
+}
+function studentIndex(id){
+  for(var i=0;i<DB.students.length;i++){ if(DB.students[i].id===id) return i; }
+  return -1;
+}
+function countRecords(){
+  var n=DB.students.length;
+  for(var k in DB.homework){ if(DB.homework[k].chinese||DB.homework[k].math) n++; }
+  if(DB.grades){ for(var g in DB.grades){ if(DB.grades[g]) n++; } }
+  return n;
+}
+
+/* ============ 示例数据 ============ */
+function seedDemo(){
+  var t = todayStr(), y = shiftDate(t,-1);
+  var s1={id:uid(),name:'林小满',grade:'三年级',photo:''};
+  var s2={id:uid(),name:'陈嘉言',grade:'四年级',photo:''};
+  var s3={id:uid(),name:'王思远',grade:'二年级',photo:''};
+  var s4={id:uid(),name:'赵一诺',grade:'五年级',photo:''};
+  DB.students=[s1,s2,s3,s4];
+
+  DB.homework[recKey(s1.id,t)]={chinese:'抄写第3课生字 2 遍，背诵《山行》',math:'口算本 P12，练习册 P8-9'};
+  DB.homework[recKey(s2.id,t)]={chinese:'预习第5课，生字表抄 2 遍',math:'练习册 P15，错题订正 3 道'};
+  DB.homework[recKey(s4.id,t)]={chinese:'日记一篇（不少于 200 字）',math:'口算本 P20'};
+
+  DB.grades[s1.id]={'单元测试':{chinese:92,math:88},'期中考试':{chinese:90,math:85},'期末考试':{chinese:0,math:0}};
+  DB.grades[s2.id]={'单元测试':{chinese:95,math:96},'期中考试':{chinese:93,math:91},'期末考试':{chinese:0,math:0}};
+  DB.grades[s4.id]={'单元测试':{chinese:88,math:90},'期中考试':{chinese:0,math:0},'期末考试':{chinese:0,math:0}};
+}
+
+/* ============ 计算层 ============ */
+/* ============ 渲染层（彼此不互调） ============ */
+function renderGradesPanel(){
+  var s=state.curId?studentById(state.curId):null;
+  var g = s?getGrades(s.id):null;
+  var form=$('gdForm');
+  if(!s){
+    form.innerHTML='<p class="hint">先在上方选择一名学生。</p>';
+    $('btnSaveGd').disabled=true; $('btnSaveGd').style.opacity='.5';
+  } else {
+    $('btnSaveGd').disabled=false; $('btnSaveGd').style.opacity='1';
+    if(!DB.examTypes.length){
+      form.innerHTML='<p class="hint">还没有考试类型，点上方「＋ 新建考试类型」添加一个。</p>';
+    } else {
+      var h='';
+      for(var i=0;i<DB.examTypes.length;i++){
+        var e=DB.examTypes[i]; var row=g[e]||{chinese:0,math:0};
+        h += '<div class="field"><label>'+esc(e)+'</label><div class="row2">'
+          + '<input type="number" min="0" max="100" id="gd_'+i+'_cn" placeholder="语文" value="'+(row.chinese||'')+'">'
+          + '<input type="number" min="0" max="100" id="gd_'+i+'_math" placeholder="数学" value="'+(row.math||'')+'">'
+          + '</div></div>';
+      }
+      form.innerHTML=h;
+    }
+  }
+}
+function renderGradesSummary(){
+  var box=$('gdSummary');
+  if(!DB.students.length){ box.innerHTML='<p class="hint">还没有学生。</p>'; return; }
+  var h='<table class="gd-table"><thead><tr><th>学生</th>';
+  for(var i=0;i<DB.examTypes.length;i++){ h+='<th colspan="3">'+esc(DB.examTypes[i])+'</th>'; }
+  h+='</tr><tr><th></th>';
+  for(var j=0;j<DB.examTypes.length;j++){ h+='<th>语</th><th>数</th><th>总</th>'; }
+  h+='</tr></thead><tbody>';
+  for(var s=0;s<DB.students.length;s++){
+    var st=DB.students[s]; var gg=getGrades(st.id);
+    h+='<tr><td>'+esc(st.name)+'</td>';
+    for(var e=0;e<DB.examTypes.length;e++){
+      var row=gg[DB.examTypes[e]]||{chinese:0,math:0};
+      var tot=(row.chinese||0)+(row.math||0);
+      h+='<td>'+(row.chinese||'-')+'</td><td>'+(row.math||'-')+'</td><td>'+(tot||'-')+'</td>';
+    }
+    h+='</tr>';
+  }
+  h+='</tbody></table>';
+  box.innerHTML=h;
+}
+function renderChips(){
+  var targets=[['hwChips','homework'],['gdChips','grades']];
+  for(var t=0;t<targets.length;t++){
+    var box=$(targets[t][0]); if(!box) continue;
+    var h='';
+    for(var i=0;i<DB.students.length;i++){
+      var s=DB.students[i];
+      var on = (s.id===state.curId) ? ' on' : '';
+      h += '<button class="chip'+on+'" data-pick="'+s.id+'" data-panel="'+targets[t][1]+'">'+esc(s.name)+'</button>';
+    }
+    if(!DB.students.length) h='<span style="color:var(--text-3);font-size:13px">还没有学生，先去「学生」页添加</span>';
+    box.innerHTML=h;
+    var bs=box.querySelectorAll('[data-pick]');
+    for(var k=0;k<bs.length;k++){
+      bs[k].addEventListener('click', function(){
+        state.curId=this.getAttribute('data-pick');
+        refreshAll();
+      });
+    }
+  }
+}
+
+function renderGrid(){
+  var box=$('stuGrid'), h='';
+  for(var i=0;i<DB.students.length;i++){
+    var s=DB.students[i];
+    var c=candy(i);
+    var sk=skinById(getSkin());
+    var av = s.photo
+      ? '<img src="'+s.photo+'" alt="">'
+      : starSvg(60, sk.color, sk.face);
+    var dots=''; var d=state.date;
+    var hw=DB.homework[recKey(s.id,d)];
+    var g0=DB.grades[s.id]; var hasGd=hasGrades(s.id); var recExams=0;
+    if(g0){ for(var ei=0;ei<DB.examTypes.length;ei++){ var rr=g0[DB.examTypes[ei]]; if(rr&&(rr.chinese||rr.math)) recExams++; } }
+    dots += '<i class="'+((hw&&(hw.chinese||hw.math))?'ok':'')+'"></i>';
+    dots += '<i class="'+((hasGd)?'ok':'')+'"></i>';
+    var metaTxt = recExams ? ('已记录 '+recExams+' 场考试成绩') : '暂无成绩记录';
+    h += '<div class="stu" draggable="true" data-id="'+s.id+'" data-idx="'+i+'" style="--ava:'+c[0]+';--ava-soft:'+c[1]+'">'
+      + '<div class="stu-ops">'
+      +   '<button class="icon-btn" data-edit="'+s.id+'" title="编辑"><svg class="svgi" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>'
+      +   '<button class="icon-btn danger" data-del="'+s.id+'" title="删除"><svg class="svgi" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>'
+      + '</div>'
+      + '<div class="ava-wrap">'
+      +   '<div class="avatar">'+av+'</div>'
+      +   '<span class="ava-deco"><svg class="svgi" viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.3.9-4.5 4.4 1 6.1-5.5-2.9-5.5 2.9 1-6.1L3 9.5l6.3-.9L12 3Z"/></svg></span>'
+      + '</div>'
+      + '<div class="info">'
+      +   '<div class="nm">'+esc(s.name)+'<span class="grade-badge">'+esc(s.grade||'未填年级')+'</span></div>'
+      +   '<div class="meta">'+esc(metaTxt)+'</div>'
+      +   '<div class="mini-dots">'+dots+'</div>'
+      + '</div>'
+      + '<div class="move-row">'
+      +   '<button class="move-btn" data-mv="-1" data-id="'+s.id+'" '+(i===0?'disabled':'')+'><svg class="svgi" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="m15 18-6-6 6-6"/></svg></button>'
+      +   '<button class="move-btn" data-mv="1" data-id="'+s.id+'" '+(i===DB.students.length-1?'disabled':'')+'><svg class="svgi" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="m9 18 6-6-6-6"/></svg></button>'
+      + '</div>'
+      + '</div>';
+  }
+  h += '<button class="add-stu" id="btnAddStu">'
+    + '<svg class="svgi" viewBox="0 0 24 24" style="width:26px;height:26px"><path d="M12 5v14M5 12h14"/></svg>'
+    + '<span>添加学生</span></button>';
+  box.innerHTML=h;
+
+  var addBtn=$('btnAddStu');
+  if(addBtn) addBtn.addEventListener('click', function(){ openStuForm(null); });
+
+  var cards=box.querySelectorAll('.stu');
+  for(var c=0;c<cards.length;c++){ bindCard(cards[c]); }
+}
+
+function bindCard(el){
+  var id=el.getAttribute('data-id');
+  el.addEventListener('click', function(e){
+    if(e.target.closest('[data-edit]') || e.target.closest('[data-del]') || e.target.closest('[data-mv]')) return;
+    openDetail(id);
+  });
+  el.addEventListener('dragstart', function(){ dragId=id; el.classList.add('dragging'); });
+  el.addEventListener('dragend', function(){ el.classList.remove('dragging'); clearDropHint(); });
+  el.addEventListener('dragover', function(e){ e.preventDefault(); el.classList.add('drop-hint'); });
+  el.addEventListener('dragleave', function(){ el.classList.remove('drop-hint'); });
+  el.addEventListener('drop', function(e){
+    e.preventDefault(); el.classList.remove('drop-hint');
+    if(dragId && dragId!==id) moveStudent(dragId, id);
+    dragId=null;
+  });
+  var ed=el.querySelector('[data-edit]');
+  if(ed) ed.addEventListener('click', function(ev){ ev.stopPropagation(); openStuForm(id); });
+  var de=el.querySelector('[data-del]');
+  if(de) de.addEventListener('click', function(ev){ ev.stopPropagation(); confirmDelStudent(id); });
+  var mvs=el.querySelectorAll('[data-mv]');
+  for(var m=0;m<mvs.length;m++){
+    mvs[m].addEventListener('click', function(ev){
+      ev.stopPropagation();
+      var dir=+this.getAttribute('data-mv');
+      var i=studentIndex(id), j=i+dir;
+      if(j<0 || j>=DB.students.length) return;
+      var tmp=DB.students[i]; DB.students[i]=DB.students[j]; DB.students[j]=tmp;
+      saveData(); refreshAll();
+    });
+  }
+}
+var dragId=null;
+function clearDropHint(){
+  var els=document.querySelectorAll('.drop-hint');
+  for(var i=0;i<els.length;i++) els[i].classList.remove('drop-hint');
+}
+function moveStudent(fromId, toId){
+  var a=studentIndex(fromId), b=studentIndex(toId);
+  if(a<0||b<0) return;
+  var it=DB.students.splice(a,1)[0];
+  DB.students.splice(b,0,it);
+  saveData(); refreshAll();
+}
+
+function renderHwPanel(){
+  $('hwDateTxt').textContent = cnDate(state.date);
+  var s=state.curId?studentById(state.curId):null;
+  var hw = s?getHW(s.id,state.date):{chinese:'',math:''};
+  $('hwChinese').value = hw.chinese||'';
+  $('hwMath').value = hw.math||'';
+  $('btnSaveHw').disabled = !s;
+  $('btnSaveHw').style.opacity = s ? '1' : '.5';
+  $('hwChinese').placeholder = s ? '例：抄写第3课生字 2 遍 + 背诵《山行》' : '先在上方选择一名学生';
+  $('hwMath').placeholder = s ? '例：口算本 P12、练习册 P8-9' : '先在上方选择一名学生';
+}
+
+function renderBackupTip(){
+  var n=countRecords(), box=$('backupTip');
+  if(n>=30){
+    box.innerHTML='<div class="tip"><svg class="svgi" viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>'
+      + '<span>数据已积累 '+n+' 条，建议点右上角「导出备份」保存一份。</span></div>';
+  } else box.innerHTML='';
+}
+
+/* ============ 日期色块 & 顶栏头像 ============ */
+var WEEK_CN=['周日','周一','周二','周三','周四','周五','周六'];
+function dayDiff(from,to){ return Math.round((parseD(to)-parseD(from))/86400000); }
+function relLabel(s){
+  var diff=dayDiff(todayStr(), s);
+  if(diff===0) return '今天';
+  if(diff===-1) return '昨天';
+  if(diff===1) return '明天';
+  return diff<0 ? ((-diff)+'天前') : (diff+'天后');
+}
+function updateDateBlock(){
+  var str=state.date; if(!str) return;
+  var p=String(str).split('-');
+  var m=+p[1], d=+p[2];
+  var isToday = (dayDiff(todayStr(), str)===0);
+  var wd = WEEK_CN[parseD(str).getDay()];
+  var el;
+  if((el=$('dbMain'))) el.textContent = m+'月'+d+'日 · '+wd;
+  if((el=$('dbSub'))) el.textContent = (isToday?'今天 · ':'') + str;
+}
+function countHWOn(date){
+  var n=0;
+  for(var i=0;i<DB.students.length;i++){
+    var r=DB.homework[recKey(DB.students[i].id, date)];
+    if(r && (r.chinese || r.math)) n++;
+  }
+  return n;
+}
+function renderSideStat(){
+  var el=$('sfStat'); if(!el) return;
+  var n=countHWOn(state.date);
+  el.textContent = DB.students.length + ' 位学生 · 当日 ' + n + ' 条作业';
+}
+function renderHwDayHint(){
+  var box=$('hwDayHint'); if(!box) return;
+  var d=state.date;
+  var n=countHWOn(d);
+  if(n>0){ box.innerHTML='<div class="day-hint ok">当日已保存 '+n+' 条作业记录</div>'; return; }
+  var prev=shiftDate(d,-1), pn=countHWOn(prev);
+  if(pn>0){
+    box.innerHTML='<div class="day-hint">'+cnDate(d)+'暂无记录'
+      + '<button class="btn btn-ghost sm" id="btnCopyPrev">从'+cnDate(prev)+'复制 '+pn+' 条</button></div>';
+    var b=$('btnCopyPrev');
+    if(b) b.addEventListener('click', function(){ copyDay(prev, d); });
+  } else box.innerHTML='';
+}
+function copyDay(from, to){
+  var n=0;
+  for(var i=0;i<DB.students.length;i++){
+    var id=DB.students[i].id;
+    var src=DB.homework[recKey(id, from)];
+    if(src && (src.chinese||src.math) && !DB.homework[recKey(id, to)]){
+      DB.homework[recKey(id, to)]={chinese:src.chinese||'', math:src.math||''}; n++;
+    }
+  }
+  saveData(); refreshAll();
+  toast(n ? ('已复制 '+n+' 条作业到'+cnDate(to)) : '没有可复制的记录');
+}
+function renderAppAvatar(){
+  var el=$('navAvatar'); if(!el) return;
+  var url=(DB.meta && DB.meta.avatar) ? DB.meta.avatar : '';
+  var sk=skinById(getSkin());
+  el.innerHTML = url ? '<img src="'+url+'" alt="">' : starSvg(36, sk.color, sk.face);
+}
+
+/* ============ 统一刷新入口 ============ */
+function refreshAll(){
+  if(!state.curId || !studentById(state.curId)){
+    state.curId = DB.students.length ? DB.students[0].id : null;
+  }
+  renderSkinPicker();
+  renderGrid();
+  renderChips();
+  renderHwPanel();
+  renderGradesPanel();
+  renderExamManage();
+  renderGradesSummary();
+  renderBackupTip();
+  updateDateBlock();
+  renderSideStat();
+  renderAppAvatar();
+}
+
+function switchTab(tab){
+  state.tab=tab;
+  var ts=document.querySelectorAll('[data-tab]');
+  for(var i=0;i<ts.length;i++) ts[i].classList.toggle('on', ts[i].getAttribute('data-tab')===tab);
+  var ps=document.querySelectorAll('.main-content .panel');
+  for(var j=0;j<ps.length;j++) ps[j].classList.toggle('on', ps[j].id==='panel-'+tab);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ============ 弹窗 ============ */
+function openMask(id){ $(id).classList.add('on'); document.body.style.overflow='hidden'; }
+function closeMask(id){ $(id).classList.remove('on'); document.body.style.overflow=''; }
+
+var formPhoto='', editId=null, examEditMode='add', examEditOld='';
+function openStuForm(id){
+  editId=id||null;
+  var s=id?studentById(id):null;
+  $('stuFormTitle').textContent = s?('编辑 · '+s.name):'添加学生';
+  $('fName').value=s?s.name:'';
+  $('fGrade').value=s?s.grade:'';
+  formPhoto = s?(s.photo||''):'';
+  paintFormAvatar(s?s.name:'');
+  openMask('maskStu');
+}
+function paintFormAvatar(name){
+  var el=$('formAvatar');
+  var sk=skinById(getSkin());
+  el.innerHTML = formPhoto ? '<img src="'+formPhoto+'" alt="">' : starSvg(64, sk.color, sk.face);
+}
+function saveStuForm(){
+  var name=$('fName').value.trim();
+  if(!name){ toast('请填写学生姓名'); return; }
+  if(editId){
+    var s=studentById(editId);
+    s.name=name; s.grade=$('fGrade').value.trim(); s.photo=formPhoto;
+    toast('已更新 '+name);
+  }else{
+    DB.students.push({id:uid(),name:name,grade:$('fGrade').value.trim(),photo:formPhoto});
+    state.curId=DB.students[DB.students.length-1].id;
+    toast('已添加 '+name);
+  }
+  saveData(); closeMask('maskStu'); refreshAll();
+}
+function confirmDelStudent(id){
+  var s=studentById(id); if(!s) return;
+  showConfirm('删除学生','确定删除「'+s.name+'」吗？该学生的作业、成绩记录会一并删除，且不可恢复。', function(){
+    DB.students.splice(studentIndex(id),1);
+    for(var k in DB.homework){ if(k.indexOf(id+'|')===0) delete DB.homework[k]; }
+    if(DB.grades[id]) delete DB.grades[id];
+    if(state.curId===id) state.curId=null;
+    saveData(); refreshAll(); toast('已删除');
+  });
+}
+var cfCallback=null;
+function showConfirm(title,msg,cb){
+  $('cfTitle').textContent=title; $('cfMsg').textContent=msg; cfCallback=cb; openMask('maskConfirm');
+}
+
+function openDetail(id){
+  var s=studentById(id); if(!s) return;
+  var d=state.date;
+  var hw=getHW(id,d), g=getGrades(id);
+  var sk=skinById(getSkin());
+  var av = s.photo ? '<img src="'+s.photo+'" alt="">' : starSvg(70, sk.color, sk.face);
+  var _i=studentIndex(id); var c=candy(_i<0?0:_i);
+  var h='<div class="modal-head"><h3>学生详情</h3>'
+    + '<button class="close-btn" data-close><svg class="svgi" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>';
+  h+='<div class="d-hero" style="--ava:'+c[0]+';--ava-soft:'+c[1]+'"><div class="avatar">'+av+'</div><div><h2>'+esc(s.name)+'</h2>'
+    + '<p>'+esc(s.grade||'未填年级')+'</p></div></div>';
+  var hwCn = hw.chinese ? esc(hw.chinese) : '<span class="hw-empty">今天还没录入语文作业</span>';
+  var hwMt = hw.math ? esc(hw.math) : '<span class="hw-empty">今天还没录入数学作业</span>';
+  h+='<div class="dsec"><h4><svg class="svgi" viewBox="0 0 24 24"><rect x="3" y="6" width="15" height="14" rx="2" fill="#fff8e6" stroke="currentColor" stroke-width="1.5"/><path d="M3 10h15M7 6V3M14 6V3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="19" cy="8" r="3" fill="#ffb300" stroke="currentColor" stroke-width="1"/></svg>今日作业（'+cnDate(d)+'）</h4>'
+    + '<div class="hw2">'
+    + '<div class="hw-card hw-cn"><div class="hw-head"><svg class="svgi" viewBox="0 0 24 24"><rect x="3" y="6" width="15" height="14" rx="2" fill="#fff8e6" stroke="currentColor" stroke-width="1.5"/><path d="M3 10h15M7 6V3M14 6V3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="19" cy="8" r="3" fill="#ffb300" stroke="currentColor" stroke-width="1"/></svg>语文</div><div class="hw-body">'+hwCn+'</div></div>'
+    + '<div class="hw-card hw-math"><div class="hw-head"><svg class="svgi" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M10 9v12"/></svg>数学</div><div class="hw-body">'+hwMt+'</div></div>'
+    + '</div></div>';
+  var gt='<table class="gd-table"><thead><tr><th>考试</th><th>语文</th><th>数学</th><th>合计</th></tr></thead><tbody>';
+  var sumAll=0, cntAll=0, recExams=0;
+  for(var ei=0;ei<DB.examTypes.length;ei++){
+    var e=DB.examTypes[ei]; var row=g[e]||{chinese:0,math:0};
+    var cn=row.chinese||0, mt=row.math||0;
+    if(cn||mt){ recExams++; sumAll+=(cn+mt); cntAll+=2; }
+    gt+='<tr><td>'+esc(e)+'</td><td>'+(row.chinese||'-')+'</td><td>'+(row.math||'-')+'</td><td>'+((cn+mt)||'-')+'</td></tr>';
+  }
+  gt+='</tbody></table>';
+  var avg = cntAll ? Math.round(sumAll/cntAll) : 0;
+  h+='<div class="dsec"><h4><svg class="svgi" viewBox="0 0 24 24"><path d="M12 2l3 6.5L22 9.5l-5 4.5 1.5 6.5L12 17l-6.5 2.5L7 14 2 9.5l7-1z" fill="#ffb300" stroke="currentColor" stroke-width="1.2"/></svg>各科成绩</h4>'+gt
+    + '<p class="d-stat">已录入 '+recExams+' 场考试 · 语文数学综合平均分 <b>'+avg+'</b></p></div>';
+  h+='<div class="modal-actions">'
+    + '<button class="btn btn-ghost" id="dEdit">编辑资料</button>'
+    + '<button class="btn btn-pri" id="dGo">去录成绩</button>'
+    + '</div>';
+  var body=$('detailBody'); body.innerHTML=h;
+  body.querySelector('[data-close]').addEventListener('click', function(){ closeMask('maskDetail'); });
+  var dEditBtn=body.querySelector('#dEdit'); if(dEditBtn) dEditBtn.addEventListener('click', function(){ closeMask('maskDetail'); openStuForm(id); });
+  var dGoBtn=body.querySelector('#dGo'); if(dGoBtn) dGoBtn.addEventListener('click', function(){
+    closeMask('maskDetail'); state.curId=id; switchTab('grades'); refreshAll();
+  });
+  openMask('maskDetail');
+}
+function hasGrades(id){
+  var g=DB.grades[id]; if(!g) return false;
+  for(var i=0;i<DB.examTypes.length;i++){ var row=g[DB.examTypes[i]]; if(row&&(row.chinese||row.math)) return true; }
+  return false;
+}
+function renderExamManage(){
+  var box=$('examManage'); if(!box) return;
+  var h='';
+  for(var i=0;i<DB.examTypes.length;i++){
+    var e=DB.examTypes[i];
+    h+='<div class="exam-item"><span class="exam-item-name">'+esc(e)+'</span>'
+      +'<span class="exam-item-ops">'
+      +'<button class="exam-mini" data-rename="'+esc(e)+'">重命名</button>'
+      +'<button class="exam-mini danger" data-del="'+esc(e)+'">删除</button>'
+      +'</span></div>';
+  }
+  box.innerHTML=h;
+  var rs=box.querySelectorAll('[data-rename]');
+  for(var r=0;r<rs.length;r++){ rs[r].addEventListener('click', function(){ openExamModal('rename', this.getAttribute('data-rename')); }); }
+  var ds=box.querySelectorAll('[data-del]');
+  for(var d=0;d<ds.length;d++){ ds[d].addEventListener('click', function(){ deleteExam(this.getAttribute('data-del')); }); }
+}
+function openExamModal(mode, oldName){
+  examEditMode=mode||'add'; examEditOld=oldName||'';
+  $('examModalTitle').textContent = (examEditMode==='rename'?'重命名考试类型':'新建考试类型');
+  $('examInput').value = examEditOld||'';
+  openMask('maskExam');
+  setTimeout(function(){ try{ $('examInput').focus(); if(examEditOld) $('examInput').select(); }catch(e){} }, 50);
+}
+function saveExamModal(){
+  var v=String($('examInput').value||'').trim();
+  if(!v){ toast('名称不能为空'); return; }
+  if(examEditMode==='add'){
+    if(DB.examTypes.indexOf(v)>=0){ toast('已存在同名考试类型'); return; }
+    DB.examTypes.push(v); toast('已新增「'+v+'」');
+  } else {
+    if(v===examEditOld){ closeMask('maskExam'); return; }
+    if(DB.examTypes.indexOf(v)>=0){ toast('已存在同名考试类型'); return; }
+    var idx=DB.examTypes.indexOf(examEditOld);
+    if(idx>=0) DB.examTypes[idx]=v;
+    for(var i=0;i<DB.students.length;i++){
+      var g=DB.grades[DB.students[i].id];
+      if(g && g[examEditOld]){ g[v]=g[examEditOld]; delete g[examEditOld]; }
+    }
+    toast('已重命名为「'+v+'」');
+  }
+  saveData(); closeMask('maskExam'); refreshAll();
+}
+function deleteExam(name){
+  if(DB.examTypes.length<=1){ toast('至少保留一个考试类型'); return; }
+  showConfirm('删除考试类型','删除「'+name+'」后，所有学生该场次的语文、数学成绩也会一并删除，且不可恢复。确定吗？', function(){
+    var idx=DB.examTypes.indexOf(name);
+    if(idx>=0) DB.examTypes.splice(idx,1);
+    for(var i=0;i<DB.students.length;i++){
+      var g=DB.grades[DB.students[i].id];
+      if(g && g[name]) delete g[name];
+    }
+    saveData(); refreshAll(); toast('已删除「'+name+'」');
+  });
+}
+
+/* ============ 导入导出 ============ */
+function doExport(){
+  var blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=appName()+'备份_'+todayStr()+'.json';
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 300);
+  toast('备份已导出');
+}
+function applyAppName(){
+  var n=appName();
+  document.title = n;
+  var el=$('appName'); if(el) el.textContent=n;
+  var ft=$('footName'); if(ft) ft.textContent=n;
+}
+function openRename(){
+  $('renameInput').value = appName();
+  openMask('maskRename');
+  setTimeout(function(){ try{ $('renameInput').focus(); $('renameInput').select(); }catch(e){} }, 50);
+}
+function saveRename(){
+  var v=String($('renameInput').value||'').trim();
+  if(!v){ toast('名称不能为空'); return; }
+  DB.meta=DB.meta||{};
+  DB.meta.name=v;
+  saveData();
+  applyAppName();
+  applySkinColors();
+  closeMask('maskRename');
+  toast('工作台名称已改为「'+v+'」');
+}
+function doImport(file){
+  var fr=new FileReader();
+  fr.onload=function(){
+    try{
+      var o=JSON.parse(fr.result);
+      if(!o || !o.students) throw new Error('bad');
+      DB=o; DB.homework=DB.homework||{}; DB.grades=DB.grades||{}; DB.examTypes=DB.examTypes||['单元测试','期中考试','期末考试']; DB.meta=DB.meta||{};
+      state.curId=null; saveData(); refreshAll(); toast('已导入 '+DB.students.length+' 名学生的数据');
+    }catch(e){ toast('文件格式不对，请选择本工作台导出的 JSON'); }
+  };
+  fr.readAsText(file);
+}
+
+/* ============ 事件绑定 ============ */
+function bindEvents(){
+  var ts=document.querySelectorAll('[data-tab]');
+  for(var i=0;i<ts.length;i++){
+    ts[i].addEventListener('click', function(){ switchTab(this.getAttribute('data-tab')); });
+  }
+  $('datePick').addEventListener('change', function(){
+    state.date=this.value||todayStr(); refreshAll();
+  });
+  $('prevDay').addEventListener('click', function(){
+    state.date=shiftDate(state.date,-1); $('datePick').value=state.date; refreshAll(); });
+  $('nextDay').addEventListener('click', function(){
+    state.date=shiftDate(state.date,1); $('datePick').value=state.date; refreshAll(); });
+  $('navAvatar').addEventListener('click', function(){ $('fileNavAvatar').click(); });
+  $('fileNavAvatar').addEventListener('change', function(){
+    var f=this.files && this.files[0]; if(!f) return;
+    compressImage(f, 240, function(dUrl){
+      if(!dUrl) return;
+      DB.meta=DB.meta||{}; DB.meta.avatar=dUrl; saveData(); renderAppAvatar(); toast('头像已更新');
+    });
+    this.value='';
+  });
+  $('appName').addEventListener('click', openRename);
+  $('btnSaveRename').addEventListener('click', saveRename);
+  $('renameInput').addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ e.preventDefault(); saveRename(); }
+  });
+
+  $('btnSaveHw').addEventListener('click', function(){
+    if(!state.curId){ toast('先选择一名学生'); return; }
+    DB.homework[recKey(state.curId,state.date)] = {
+      chinese:$('hwChinese').value.trim(), math:$('hwMath').value.trim() };
+    saveData(); refreshAll(); toast('作业已保存');
+  });
+  $('btnSaveGd').addEventListener('click', function(){
+    if(!state.curId){ toast('先选择一名学生'); return; }
+    if(!DB.examTypes.length){ toast('请先新建考试类型'); return; }
+    var g={};
+    for(var i=0;i<DB.examTypes.length;i++){
+      var e=DB.examTypes[i];
+      var cn=parseInt($('gd_'+i+'_cn').value,10);
+      var mt=parseInt($('gd_'+i+'_math').value,10);
+      g[e]={ chinese:(isNaN(cn)?0:cn), math:(isNaN(mt)?0:mt) };
+    }
+    DB.grades[state.curId]=g;
+    saveData(); refreshAll(); toast('成绩已保存');
+  });
+
+  $('btnSaveStu').addEventListener('click', saveStuForm);
+  $('btnAddExam').addEventListener('click', function(){ openExamModal('add'); });
+  $('examOk').addEventListener('click', saveExamModal);
+  $('examInput').addEventListener('keydown', function(e){ if(e.key==='Enter') saveExamModal(); });
+  $('btnSkin').addEventListener('click', function(){ openMask('maskSkin'); });
+  $('btnPickPhoto').addEventListener('click', function(){ $('filePhoto').click(); });
+  $('formAvatar').addEventListener('click', function(){ $('filePhoto').click(); });
+  $('btnClearPhoto').addEventListener('click', function(){ formPhoto=''; paintFormAvatar($('fName').value); });
+  $('filePhoto').addEventListener('change', function(){
+    var f=this.files && this.files[0]; if(!f) return;
+    compressImage(f, 400, function(dataUrl){ formPhoto=dataUrl; paintFormAvatar($('fName').value); });
+    this.value='';
+  });
+
+  $('btnExport').addEventListener('click', doExport);
+  $('btnSkin').addEventListener('click', function(){ openMask('maskSkin'); });
+  $('btnImport').addEventListener('click', function(){ $('fileImport').click(); });
+  $('fileImport').addEventListener('change', function(){
+    var f=this.files && this.files[0]; if(f) doImport(f); this.value='';
+  });
+  $('btnWipe').addEventListener('click', function(){
+    showConfirm('清空全部数据','这会删除所有学生、作业和成绩记录，不可恢复！确定继续吗？', function(){
+      DB=blankDB(); DB.meta.demo=false; state.curId=null; saveData(); refreshAll(); toast('已清空全部数据');
+    });
+  });
+
+  $('cfOk').addEventListener('click', function(){
+    closeMask('maskConfirm');
+    if(cfCallback){ var f=cfCallback; cfCallback=null; f(); }
+  });
+  var closers=document.querySelectorAll('[data-close]');
+  for(var c=0;c<closers.length;c++){
+    closers[c].addEventListener('click', function(){
+      var m=this.closest('.mask'); if(m){ m.classList.remove('on'); document.body.style.overflow=''; }
+    });
+  }
+  var masks=document.querySelectorAll('.mask');
+  for(var mi=0;mi<masks.length;mi++){
+    masks[mi].addEventListener('click', function(e){
+      if(e.target===this){ this.classList.remove('on'); document.body.style.overflow=''; }
+    });
+  }
+}
+function fallbackCopy(t){
+  var ta=document.createElement('textarea');
+  ta.value=t; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); toast('已复制'); }catch(e){ toast('复制失败，请手动长按选中'); }
+  ta.remove();
+}
+function compressImage(file, maxW, cb){
+  var fr=new FileReader();
+  fr.onload=function(){
+    var img=new Image();
+    img.onload=function(){
+      var w=img.width, h=img.height;
+      if(w>h && w>maxW){ h=Math.round(h*maxW/w); w=maxW; }
+      else if(h>=w && h>maxW){ w=Math.round(w*maxW/h); h=maxW; }
+      var cv=document.createElement('canvas');
+      cv.width=w; cv.height=h;
+      var c=cv.getContext('2d');
+      c.drawImage(img,0,0,w,h);
+      try{ cb(cv.toDataURL('image/jpeg',0.82)); }catch(e){ cb(''); }
+    };
+    img.onerror=function(){ cb(''); };
+    img.src=fr.result;
+  };
+  fr.readAsDataURL(file);
+}
+
+/* ============ 初始化 ============ */
+function init(){
+  loadData();
+  state.date=todayStr();
+  $('datePick').value=state.date;
+  applyAppName();
+  applySkinColors();
+  bindEvents();
+  refreshAll();
+}
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded', init);
+} else init();
+
+})();
+</script>
+</body>
+</html>
