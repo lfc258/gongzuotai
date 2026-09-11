@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="圆圆托管">
-<meta name="theme-color" content="#ffb300">
+<meta name="theme-color" content="#ffb300" id="themeColorMeta">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23ffb300'/%3E%3Cpath d='M32 8l6.5 13.2L53 23.3l-10.5 8.8L45.5 47 32 40l-13.5 7 1-14.9L11 23.3l14.5-2.1z' fill='%23fff8e6'/%3E%3Ccircle cx='26' cy='28' r='2' fill='%233d2b00'/%3E%3Ccircle cx='38' cy='28' r='2' fill='%233d2b00'/%3E%3Cpath d='M28 34c0 0 2 2 4 2s4-2 4-2' stroke='%233d2b00' stroke-width='1.2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ffb300'/%3E%3Cpath d='M32 10l5.5 11.3L51 23.2 42 30.5l2 13.5L32 37l-12 7 2-13.5-9-7.3 11.5-1.9z' fill='%23fff8e6'/%3E%3C/svg%3E">
 <title>圆圆专属托管工作台</title>
@@ -33,6 +33,9 @@
   --shadow:0 2px 12px rgba(120,80,40,.08);
   --nav-bg:#fff8ee;
   --nav-active:#fef0d5;
+  /* 移动端状态栏底色（跟随主题） */
+  --sb-from:#ffb300;
+  --sb-to:#ff8c00;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden}
@@ -45,6 +48,20 @@ button{font-family:inherit;font-size:15px;cursor:pointer;border:none;background:
 input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
 .svgi{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .wrap{max-width:1080px;margin:0 auto;padding:0 14px}
+
+/* ---------- 移动端状态栏底色 ---------- */
+/* 桌面端 safe-area-inset-top 为 0，自动不显示；手机端（尤其"添加到主屏幕"全屏模式）
+   会用主题色填满顶部刘海/状态栏区域，避免露出白边 */
+.status-bar{
+  position:fixed;left:0;right:0;top:0;
+  height:env(safe-area-inset-top,0px);
+  min-height:0;
+  background:linear-gradient(135deg,var(--sb-from),var(--sb-to));
+  z-index:120;
+  pointer-events:none;
+}
+/* 全屏（standalone）模式下状态栏文字为白色，保证深色底上有足够对比 */
+html.is-standalone .status-bar{background:linear-gradient(135deg,var(--sb-from),var(--sb-to))}
 
 /* ---------- header ---------- */
 .topbar{background:linear-gradient(135deg,#ffb300,#ff8c00);color:#fff;padding:14px 0 16px;padding-top:calc(14px + env(safe-area-inset-top));box-shadow:0 4px 20px rgba(255,179,0,.3)}
@@ -137,7 +154,8 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
   background-image:linear-gradient(180deg,rgba(255,252,247,.52),rgba(255,248,232,.64)),url('bg2.jpg');
   background-repeat:no-repeat;background-position:center center;
   background-size:cover;background-attachment:fixed}
-.content-inner{max-width:960px;margin:0 auto;padding:18px 16px 28px}
+.content-inner{max-width:960px;margin:0 auto;
+  padding:calc(18px + env(safe-area-inset-top,0px)) 16px 28px}
 .panel{display:none}
 .panel.on{display:block}
 
@@ -326,7 +344,7 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
   .side-tools .tool span{font-size:11.5px}
   .side-foot{display:none}
   .main-content{margin-left:100px}
-  .content-inner{padding:16px 12px 26px}
+  .content-inner{padding:calc(16px + env(safe-area-inset-top,0px)) 12px 26px}
 }
 /* 手机竖屏 */
 @media(max-width:720px){
@@ -346,7 +364,7 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
   .side-tools .tool svg{width:16px;height:16px}
   .side-tools .tool span{font-size:11px}
   .main-content{margin-left:84px}
-  .content-inner{padding:14px 12px 28px}
+  .content-inner{padding:calc(14px + env(safe-area-inset-top,0px)) 12px 28px}
   .card{padding:12px;border-radius:16px}
   .row3{grid-template-columns:1fr}
   .kv{grid-template-columns:1fr}
@@ -354,9 +372,10 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
   .date-info .di-main{font-size:14px}
   .modal{max-height:94vh}
   .legend{font-size:12px}
-}.modal{max-height:94vh}
-  .legend{font-size:12px}
 }
+.modal{max-height:94vh}
+.legend{font-size:12px}
+
 /* 小屏手机 */
 @media(max-width:400px){
   .side-nav{width:72px;padding:8px 3px;gap:6px}
@@ -369,8 +388,7 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
   .side-tools .tool svg{width:15px;height:15px}
   .side-tools .tool span{font-size:10px}
   .main-content{margin-left:72px}
-  .content-inner{padding:12px 8px 24px}
-  .content-inner{padding:12px 8px 24px}
+  .content-inner{padding:calc(12px + env(safe-area-inset-top,0px)) 8px 24px}
   .datebar{gap:6px}
 
 
@@ -379,6 +397,9 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
 </style>
 </head>
 <body>
+<!-- 移动端状态栏底色：桌面端高度为 0 自动隐藏 -->
+<div class="status-bar" id="statusBar" aria-hidden="true"></div>
+
 <div class="app-shell">
   <!-- 左侧边栏：工作台信息 + 导航 + 工具 -->
   <aside class="side-nav" id="sideNav">
@@ -671,10 +692,42 @@ function renderSkinPicker(){
     });
   }
 }
+/* 把 #rrggbb 按百分比调暗/调亮（pct 为负=变暗） */
+function shadeColor(hex, pct){
+  var h=String(hex||'').replace('#','');
+  if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  if(h.length!==6) return '#ff8c00';
+  var num=parseInt(h,16);
+  var f=1+pct;
+  var r=Math.max(0,Math.min(255,Math.round(((num>>16)&255)*f)));
+  var g=Math.max(0,Math.min(255,Math.round(((num>>8)&255)*f)));
+  var b=Math.max(0,Math.min(255,Math.round((num&255)*f)));
+  return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+/* 同步移动端状态栏底色：CSS 渐变 + 浏览器/系统状态栏 theme-color */
+function applyStatusBarColor(color){
+  var to=shadeColor(color, -0.28);
+  var rs=document.documentElement.style;
+  rs.setProperty('--sb-from', color);
+  rs.setProperty('--sb-to', to);
+  var m=$('themeColorMeta');
+  if(m) m.setAttribute('content', color);
+}
 function applySkinColors(){
   var sk=skinById(getSkin());
   document.documentElement.style.setProperty('--primary', sk.color);
   document.documentElement.style.setProperty('--primary-soft', sk.body+'22');
+  applyStatusBarColor(sk.color);
+}
+/* 标记"添加到主屏幕"后的全屏模式，便于状态栏做适配 */
+function markStandalone(){
+  var standalone=false;
+  try{
+    standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+      || (window.matchMedia && window.matchMedia('(display-mode: fullscreen)').matches)
+      || window.navigator.standalone === true;
+  }catch(e){ standalone=false; }
+  if(standalone) document.documentElement.classList.add('is-standalone');
 }
 function drawStarBoy(ctx,cx,cy,r,c1,c2){
   // c1=body, c2=face
@@ -1372,6 +1425,7 @@ function init(){
   state.date=todayStr();
   $('datePick').value=state.date;
   applyAppName();
+  markStandalone();
   applySkinColors();
   bindEvents();
   refreshAll();
