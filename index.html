@@ -33,9 +33,8 @@
   --shadow:0 2px 12px rgba(120,80,40,.08);
   --nav-bg:#fff8ee;
   --nav-active:#fef0d5;
-  /* 移动端状态栏底色（跟随主题） */
-  --sb-from:#ffb300;
-  --sb-to:#ff8c00;
+  /* 移动端状态栏底色（纯色，跟随主题） */
+  --sb-color:#ffb300;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden}
@@ -56,12 +55,10 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
   position:fixed;left:0;right:0;top:0;
   height:env(safe-area-inset-top,0px);
   min-height:0;
-  background:linear-gradient(135deg,var(--sb-from),var(--sb-to));
+  background:var(--sb-color);
   z-index:120;
   pointer-events:none;
 }
-/* 全屏（standalone）模式下状态栏文字为白色，保证深色底上有足够对比 */
-html.is-standalone .status-bar{background:linear-gradient(135deg,var(--sb-from),var(--sb-to))}
 
 /* ---------- header ---------- */
 .topbar{background:linear-gradient(135deg,#ffb300,#ff8c00);color:#fff;padding:14px 0 16px;padding-top:calc(14px + env(safe-area-inset-top));box-shadow:0 4px 20px rgba(255,179,0,.3)}
@@ -112,9 +109,15 @@ html.is-standalone .status-bar{background:linear-gradient(135deg,var(--sb-from),
 /* ---------- side nav 侧边栏（品牌 + 导航 + 工具） ---------- */
 .side-nav{width:120px;flex-shrink:0;background:rgba(255,248,238,.9);border-right:1px solid var(--line);
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  position:fixed;left:0;top:0;bottom:0;z-index:80;overflow-y:auto;overscroll-behavior:contain;
+  position:fixed;left:0;z-index:80;overflow-y:auto;overscroll-behavior:contain;
+  /* 整体让开系统状态栏与底部手势条，而不是靠 padding 让位。
+     这样侧边栏内部滚动时内容也不会滑到 fixed 状态栏底下被遮挡。
+     注意：env() 单独声明、不套在 calc() 里，兼容性更好（老版 iOS 走 constant 回退）。
+     另：下方各断点可自由用 padding 简写，不会再破坏安全区留白 */
+  top:constant(safe-area-inset-top);top:env(safe-area-inset-top,0px);
+  bottom:constant(safe-area-inset-bottom);bottom:env(safe-area-inset-bottom,0px);
   display:flex;flex-direction:column;gap:6px;
-  padding:calc(14px + env(safe-area-inset-top)) 8px calc(14px + env(safe-area-inset-bottom));
+  padding:14px 8px;
   box-shadow:2px 0 14px rgba(120,80,40,.05)}
 .side-brand{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;
   padding:6px 6px 10px;border-bottom:1px solid var(--line);margin-bottom:4px}
@@ -692,24 +695,10 @@ function renderSkinPicker(){
     });
   }
 }
-/* 把 #rrggbb 按百分比调暗/调亮（pct 为负=变暗） */
-function shadeColor(hex, pct){
-  var h=String(hex||'').replace('#','');
-  if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
-  if(h.length!==6) return '#ff8c00';
-  var num=parseInt(h,16);
-  var f=1+pct;
-  var r=Math.max(0,Math.min(255,Math.round(((num>>16)&255)*f)));
-  var g=Math.max(0,Math.min(255,Math.round(((num>>8)&255)*f)));
-  var b=Math.max(0,Math.min(255,Math.round((num&255)*f)));
-  return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
-}
-/* 同步移动端状态栏底色：CSS 渐变 + 浏览器/系统状态栏 theme-color */
+/* 同步移动端状态栏底色：纯色，跟随当前皮肤（同时更新浏览器/系统状态栏色） */
 function applyStatusBarColor(color){
-  var to=shadeColor(color, -0.28);
   var rs=document.documentElement.style;
-  rs.setProperty('--sb-from', color);
-  rs.setProperty('--sb-to', to);
+  rs.setProperty('--sb-color', color);
   var m=$('themeColorMeta');
   if(m) m.setAttribute('content', color);
 }
