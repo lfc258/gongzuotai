@@ -35,6 +35,17 @@
   --nav-active:#fef0d5;
   /* 移动端状态栏底色（纯色，跟随主题） */
   --sb-color:#ffb300;
+  /* 安全区（刘海 / 状态栏 / 底部手势条），桌面端一律为 0。
+     统一收口成变量：各处只引用变量，断点里的 padding/margin 简写就不会再误伤安全区。
+     连续两行是为老版 iOS 兼容：先 constant() 后 env()，各自在不认识的浏览器上失效、互不影响。 */
+  --sat:constant(safe-area-inset-top);
+  --sat:env(safe-area-inset-top,0px);
+  --sab:constant(safe-area-inset-bottom);
+  --sab:env(safe-area-inset-bottom,0px);
+  --sal:constant(safe-area-inset-left);
+  --sal:env(safe-area-inset-left,0px);
+  --sar:constant(safe-area-inset-right);
+  --sar:env(safe-area-inset-right,0px);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden}
@@ -53,7 +64,7 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
    会用主题色填满顶部刘海/状态栏区域，避免露出白边 */
 .status-bar{
   position:fixed;left:0;right:0;top:0;
-  height:env(safe-area-inset-top,0px);
+  height:var(--sat);
   min-height:0;
   background:var(--sb-color);
   z-index:120;
@@ -61,7 +72,7 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
 }
 
 /* ---------- header ---------- */
-.topbar{background:linear-gradient(135deg,#ffb300,#ff8c00);color:#fff;padding:14px 0 16px;padding-top:calc(14px + env(safe-area-inset-top));box-shadow:0 4px 20px rgba(255,179,0,.3)}
+.topbar{background:linear-gradient(135deg,#ffb300,#ff8c00);color:#fff;padding:14px 0 16px;padding-top:calc(14px + var(--sat));box-shadow:0 4px 20px rgba(255,179,0,.3)}
 .topbar .wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .logo{display:flex;align-items:center;gap:8px;font-size:19px;font-weight:700;letter-spacing:.5px}
 .logo .badge{width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center}
@@ -109,13 +120,13 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
 /* ---------- side nav 侧边栏（品牌 + 导航 + 工具） ---------- */
 .side-nav{width:120px;flex-shrink:0;background:rgba(255,248,238,.9);border-right:1px solid var(--line);
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  position:fixed;left:0;z-index:80;overflow-y:auto;overscroll-behavior:contain;
-  /* 整体让开系统状态栏与底部手势条，而不是靠 padding 让位。
-     这样侧边栏内部滚动时内容也不会滑到 fixed 状态栏底下被遮挡。
-     注意：env() 单独声明、不套在 calc() 里，兼容性更好（老版 iOS 走 constant 回退）。
-     另：下方各断点可自由用 padding 简写，不会再破坏安全区留白 */
-  top:constant(safe-area-inset-top);top:env(safe-area-inset-top,0px);
-  bottom:constant(safe-area-inset-bottom);bottom:env(safe-area-inset-bottom,0px);
+  position:fixed;z-index:80;overflow-y:auto;overscroll-behavior:contain;
+  /* 用 inset（而不是 padding）让开系统状态栏、底部手势条与横屏侧边刘海。
+     这样侧边栏内部滚动时内容也不会滑到 fixed 状态栏底下被遮挡，
+     且下方各断点可自由用 padding 简写，不会再破坏安全区留白 */
+  top:var(--sat);
+  bottom:var(--sab);
+  left:var(--sal);
   display:flex;flex-direction:column;gap:6px;
   padding:14px 8px;
   box-shadow:2px 0 14px rgba(120,80,40,.05)}
@@ -152,13 +163,17 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
 .side-foot{padding:10px 6px 0;border-top:1px solid var(--line);margin-top:6px;
   color:var(--text-3);font-size:11px;line-height:1.5}
 .sf-line{color:var(--text-2);font-weight:700;margin-bottom:2px}
-.main-content{flex:1;margin-left:120px;min-width:0;max-width:100%;min-height:100vh;
+.main-content{flex:1;min-width:0;max-width:100%;min-height:100vh;
+  /* 侧边栏已右移 --sal，这里同步右移，保证与侧边栏严丝合缝 */
+  margin-left:calc(120px + var(--sal));
+  /* 横屏时若刘海在右侧，给内容留出安全空间 */
+  padding-right:var(--sar);
   background-color:var(--bg);
   background-image:linear-gradient(180deg,rgba(255,252,247,.52),rgba(255,248,232,.64)),url('bg2.jpg');
   background-repeat:no-repeat;background-position:center center;
   background-size:cover;background-attachment:fixed}
 .content-inner{max-width:960px;margin:0 auto;
-  padding:calc(18px + env(safe-area-inset-top,0px)) 16px 28px}
+  padding:calc(18px + var(--sat)) 16px calc(28px + var(--sab))}
 .panel{display:none}
 .panel.on{display:block}
 
@@ -240,7 +255,7 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
 .mask{position:fixed;inset:0;background:rgba(15,20,35,.5);display:none;align-items:flex-end;justify-content:center;z-index:90;padding:0}
 .mask.on{display:flex}
 .modal{background:#fff;width:100%;max-width:560px;border-radius:20px 20px 0 0;max-height:92vh;overflow:auto;
-  padding:16px 16px calc(18px + env(safe-area-inset-bottom));animation:up .22s ease}
+  padding:16px 16px calc(18px + var(--sab));animation:up .22s ease}
 @keyframes up{from{transform:translateY(30px);opacity:.4}to{transform:translateY(0);opacity:1}}
 .modal-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .modal-head h3{margin:0;font-size:17px;flex:1}
@@ -288,7 +303,7 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
 .img-box img{width:100%;max-width:320px;border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,.15);display:block;margin:0 auto}
 .img-tip{font-size:12px;color:var(--text-3);margin-top:10px}
 
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(28px + env(safe-area-inset-bottom));
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(28px + var(--sab));
   background:rgba(20,26,42,.92);color:#fff;padding:10px 18px;border-radius:22px;font-size:14px;z-index:200;opacity:0;
   transition:opacity .2s;pointer-events:none;max-width:86%;text-align:center}
 .toast.on{opacity:1}
@@ -346,8 +361,8 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
   .side-tools .tool svg{width:17px;height:17px}
   .side-tools .tool span{font-size:11.5px}
   .side-foot{display:none}
-  .main-content{margin-left:100px}
-  .content-inner{padding:calc(16px + env(safe-area-inset-top,0px)) 12px 26px}
+  .main-content{margin-left:calc(100px + var(--sal))}
+  .content-inner{padding:calc(16px + var(--sat)) 12px calc(26px + var(--sab))}
 }
 /* 手机竖屏 */
 @media(max-width:720px){
@@ -366,8 +381,8 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
   .side-tools .tool{height:50px;gap:3px;border-radius:11px}
   .side-tools .tool svg{width:16px;height:16px}
   .side-tools .tool span{font-size:11px}
-  .main-content{margin-left:84px}
-  .content-inner{padding:calc(14px + env(safe-area-inset-top,0px)) 12px 28px}
+  .main-content{margin-left:calc(84px + var(--sal))}
+  .content-inner{padding:calc(14px + var(--sat)) 12px calc(28px + var(--sab))}
   .card{padding:12px;border-radius:16px}
   .row3{grid-template-columns:1fr}
   .kv{grid-template-columns:1fr}
@@ -390,8 +405,8 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
   .side-tools .tool{height:48px;gap:3px}
   .side-tools .tool svg{width:15px;height:15px}
   .side-tools .tool span{font-size:10px}
-  .main-content{margin-left:72px}
-  .content-inner{padding:calc(12px + env(safe-area-inset-top,0px)) 8px 24px}
+  .main-content{margin-left:calc(72px + var(--sal))}
+  .content-inner{padding:calc(12px + var(--sat)) 8px calc(24px + var(--sab))}
   .datebar{gap:6px}
 
 
