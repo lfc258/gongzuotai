@@ -291,6 +291,17 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
 .hw-body{font-size:14px;line-height:1.55;color:var(--text);white-space:pre-wrap;word-break:break-word}
 .hw-empty{color:var(--text-3);font-size:13px;font-style:italic}
 @media(max-width:560px){.hw2{grid-template-columns:1fr}}
+/* 各班级作业查看：一排三个班级按钮，点击弹窗看详情 */
+.cls-hw-list{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:900px){.cls-hw-list{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.cls-hw-list{grid-template-columns:repeat(2,1fr)}}
+.cls-hw{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 12px;cursor:pointer;
+  transition:background .12s ease,box-shadow .12s ease,border-color .12s ease}
+.cls-hw:hover{background:#fffaf0;box-shadow:0 6px 16px rgba(120,80,40,.10);border-color:#ffd97a}
+.cls-hw:active{background:#fff4e0}
+.cls-hw-name{flex:1;min-width:0;font-weight:800;font-size:14px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cls-hw-count{flex:0 0 auto;font-size:12px;font-weight:600;color:var(--text-3);background:#faf7f1;border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+.cls-hw-go{flex:0 0 auto;width:16px;height:16px;color:var(--primary)}
 .week{display:flex;gap:5px;margin-top:8px}
 .week div{flex:1;text-align:center}
 .week i{display:block;height:26px;border-radius:8px;background:#eef1f8;margin-bottom:3px}
@@ -505,7 +516,10 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
     <div class="card">
       <h3 class="sec-title"><svg class="svgi" viewBox="0 0 24 24"><rect x="3" y="6" width="15" height="14" rx="2" fill="#fff8e6" stroke="currentColor" stroke-width="1.5"/><path d="M3 10h15M7 6V3M14 6V3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="19" cy="8" r="3" fill="#ffb300" stroke="currentColor" stroke-width="1"/></svg>作业录入 <span class="sub" id="hwDateTxt"></span></h3>
       <div id="hwDayHint"></div>
-      <div class="chip-row" id="hwChips"></div>
+      <div class="field" style="margin-top:8px">
+        <label>选择班级</label>
+        <div class="chip-row" id="hwChips"></div>
+      </div>
       <div class="field" style="margin-top:12px">
         <label>语文作业</label>
         <textarea id="hwChinese" placeholder="例：抄写第3课生字 2 遍 + 背诵《山行》"></textarea>
@@ -514,7 +528,13 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
         <label>数学作业</label>
         <textarea id="hwMath" placeholder="例：口算本 P12、练习册 P8-9"></textarea>
       </div>
-      <button class="btn btn-pri" id="btnSaveHw"><svg class="svgi" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>保存今日作业</button>
+      <button class="btn btn-pri" id="btnSaveHw"><svg class="svgi" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg><span id="hwSaveTxt">保存今日作业</span></button>
+      <p class="hint" style="margin-top:10px">按班级统一录入的作业，会自动同步到该班每一名学生的「今日作业」中；学生卡片与详情里都能看到。</p>
+    </div>
+
+    <div class="card">
+      <h3 class="sec-title"><svg class="svgi" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="19" cy="17" r="3" fill="#ffb300" stroke="currentColor" stroke-width="1.2"/></svg>各班级作业查看 <span class="sub" id="hwViewDateTxt"></span></h3>
+      <div id="hwClassView"></div>
     </div>
   </section>
 
@@ -575,6 +595,11 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
 <!-- 学生详情 -->
 <div class="mask" id="maskDetail">
   <div class="modal" id="detailBody"></div>
+</div>
+
+<!-- 班级作业详情 -->
+<div class="mask" id="maskClassHw">
+  <div class="modal" id="classHwBody" style="max-width:540px"></div>
 </div>
 
 <!-- 改名 -->
@@ -649,7 +674,7 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
 /* ============ 常量 & 工具 ============ */
 var KEY = 'wb_tuoguan_db_v1';
 var DB = null;
-var state = { date:'', tab:'students', curId:null, tone:'warm' };
+var state = { date:'', tab:'students', curId:null, hwClass:null, tone:'warm' };
 
 function $(id){ return document.getElementById(id); }
 function pad(n){ return n<10 ? '0'+n : ''+n; }
@@ -767,7 +792,7 @@ function toast(msg){ var t=$('toast'); t.textContent=msg; t.classList.add('on');
 
 /* ============ 数据层 ============ */
 function blankDB(){
-  return { students:[], homework:{}, grades:{}, examTypes:['单元测试','期中考试','期末考试'], meta:{ created:todayStr(), name:'圆圆', demo:true } };
+  return { students:[], homework:{}, classHomework:{}, grades:{}, examTypes:['单元测试','期中考试','期末考试'], meta:{ created:todayStr(), name:'圆圆', demo:true } };
 }
 function appName(){ return (DB && DB.meta && DB.meta.name) ? DB.meta.name : '圆圆'; }
 function loadData(){
@@ -776,7 +801,7 @@ function loadData(){
   if(raw){
     try{
       var o=JSON.parse(raw);
-      if(o && o.students){ DB = o; DB.homework=DB.homework||{}; DB.grades=DB.grades||{}; DB.examTypes=DB.examTypes||['单元测试','期中考试','期末考试']; DB.meta=DB.meta||{}; return; }
+      if(o && o.students){ DB = o; DB.homework=DB.homework||{}; DB.classHomework=DB.classHomework||{}; DB.grades=DB.grades||{}; DB.examTypes=DB.examTypes||['单元测试','期中考试','期末考试']; DB.meta=DB.meta||{}; return; }
     }catch(e){ /* 损坏则重建 */ }
   }
   DB = blankDB();
@@ -810,6 +835,36 @@ function studentIndex(id){
   for(var i=0;i<DB.students.length;i++){ if(DB.students[i].id===id) return i; }
   return -1;
 }
+/* ---------- 班级（以学生的「年级」字段作为班级分组） ---------- */
+function classList(){
+  var seen={}, out=[];
+  for(var i=0;i<DB.students.length;i++){
+    var g=DB.students[i].grade||'';
+    if(g && !seen[g]){ seen[g]=1; out.push(g); }
+  }
+  return out;
+}
+function studentsInClass(cls){
+  var a=[];
+  for(var i=0;i<DB.students.length;i++){ if((DB.students[i].grade||'')===cls) a.push(DB.students[i]); }
+  return a;
+}
+function getClassHW(cls, date){
+  return DB.classHomework[recKey(cls,date)] || {chinese:'',math:''};
+}
+/* 把某班级某日的作业同步写入该班每个学生的个人作业记录 */
+function syncClassToStudents(cls, date){
+  var ch=getClassHW(cls,date);
+  if(!(ch.chinese||ch.math)) return;
+  var list=studentsInClass(cls);
+  for(var i=0;i<list.length;i++){ DB.homework[recKey(list[i].id,date)]={chinese:ch.chinese||'',math:ch.math||''}; }
+}
+/* 学生新增/改班级后，把其所在班级当日作业回填到个人记录 */
+function syncStudentToClass(id, date){
+  var s=studentById(id); if(!s||!s.grade) return;
+  var ch=getClassHW(s.grade,date);
+  if(ch.chinese||ch.math){ DB.homework[recKey(id,date)]={chinese:ch.chinese||'',math:ch.math||''}; }
+}
 function countRecords(){
   var n=DB.students.length;
   for(var k in DB.homework){ if(DB.homework[k].chinese||DB.homework[k].math) n++; }
@@ -819,16 +874,21 @@ function countRecords(){
 
 /* ============ 示例数据 ============ */
 function seedDemo(){
-  var t = todayStr(), y = shiftDate(t,-1);
+  var t = todayStr();
   var s1={id:uid(),name:'林小满',grade:'三年级',photo:''};
-  var s2={id:uid(),name:'陈嘉言',grade:'四年级',photo:''};
+  var s2={id:uid(),name:'陈嘉言',grade:'三年级',photo:''};
   var s3={id:uid(),name:'王思远',grade:'二年级',photo:''};
-  var s4={id:uid(),name:'赵一诺',grade:'五年级',photo:''};
+  var s4={id:uid(),name:'赵一诺',grade:'二年级',photo:''};
   DB.students=[s1,s2,s3,s4];
 
-  DB.homework[recKey(s1.id,t)]={chinese:'抄写第3课生字 2 遍，背诵《山行》',math:'口算本 P12，练习册 P8-9'};
-  DB.homework[recKey(s2.id,t)]={chinese:'预习第5课，生字表抄 2 遍',math:'练习册 P15，错题订正 3 道'};
-  DB.homework[recKey(s4.id,t)]={chinese:'日记一篇（不少于 200 字）',math:'口算本 P20'};
+  // 班级作业（按年级分组），保存时同步到各班每个学生
+  function setClassHW(cls, cn, mt){
+    DB.classHomework[recKey(cls,t)]={chinese:cn,math:mt};
+    var list=studentsInClass(cls);
+    for(var i=0;i<list.length;i++){ DB.homework[recKey(list[i].id,t)]={chinese:cn,math:mt}; }
+  }
+  setClassHW('三年级','抄写第3课生字 2 遍，背诵《山行》','口算本 P12，练习册 P8-9');
+  setClassHW('二年级','预习第5课，生字表抄 2 遍','练习册 P15，错题订正 3 道');
 
   DB.grades[s1.id]={'单元测试':{chinese:92,math:88},'期中考试':{chinese:90,math:85},'期末考试':{chinese:0,math:0}};
   DB.grades[s2.id]={'单元测试':{chinese:95,math:96},'期中考试':{chinese:93,math:91},'期末考试':{chinese:0,math:0}};
@@ -883,24 +943,22 @@ function renderGradesSummary(){
   box.innerHTML=h;
 }
 function renderChips(){
-  var targets=[['hwChips','homework'],['gdChips','grades']];
-  for(var t=0;t<targets.length;t++){
-    var box=$(targets[t][0]); if(!box) continue;
-    var h='';
-    for(var i=0;i<DB.students.length;i++){
-      var s=DB.students[i];
-      var on = (s.id===state.curId) ? ' on' : '';
-      h += '<button class="chip'+on+'" data-pick="'+s.id+'" data-panel="'+targets[t][1]+'">'+esc(s.name)+'</button>';
-    }
-    if(!DB.students.length) h='<span style="color:var(--text-3);font-size:13px">还没有学生，先去「学生」页添加</span>';
-    box.innerHTML=h;
-    var bs=box.querySelectorAll('[data-pick]');
-    for(var k=0;k<bs.length;k++){
-      bs[k].addEventListener('click', function(){
-        state.curId=this.getAttribute('data-pick');
-        refreshAll();
-      });
-    }
+  // 仅成绩面板按学生选择；作业面板已改为按班级选择（见 renderHwPanel）
+  var box=$('gdChips'); if(!box) return;
+  var h='';
+  for(var i=0;i<DB.students.length;i++){
+    var s=DB.students[i];
+    var on = (s.id===state.curId) ? ' on' : '';
+    h += '<button class="chip'+on+'" data-pick="'+s.id+'" data-panel="grades">'+esc(s.name)+'</button>';
+  }
+  if(!DB.students.length) h='<span style="color:var(--text-3);font-size:13px">还没有学生，先去「学生」页添加</span>';
+  box.innerHTML=h;
+  var bs=box.querySelectorAll('[data-pick]');
+  for(var k=0;k<bs.length;k++){
+    bs[k].addEventListener('click', function(){
+      state.curId=this.getAttribute('data-pick');
+      refreshAll();
+    });
   }
 }
 
@@ -998,14 +1056,85 @@ function moveStudent(fromId, toId){
 
 function renderHwPanel(){
   $('hwDateTxt').textContent = cnDate(state.date);
-  var s=state.curId?studentById(state.curId):null;
-  var hw = s?getHW(s.id,state.date):{chinese:'',math:''};
-  $('hwChinese').value = hw.chinese||'';
-  $('hwMath').value = hw.math||'';
-  $('btnSaveHw').disabled = !s;
-  $('btnSaveHw').style.opacity = s ? '1' : '.5';
-  $('hwChinese').placeholder = s ? '例：抄写第3课生字 2 遍 + 背诵《山行》' : '先在上方选择一名学生';
-  $('hwMath').placeholder = s ? '例：口算本 P12、练习册 P8-9' : '先在上方选择一名学生';
+  var cls=state.hwClass;
+  // 班级选择 chips
+  var box=$('hwChips');
+  if(box){
+    var classes=classList();
+    var h='';
+    if(!classes.length){
+      h='<span style="color:var(--text-3);font-size:13px">还没有班级，先去「学生」页给学生填写「年级」</span>';
+    } else {
+      for(var i=0;i<classes.length;i++){
+        var on=(classes[i]===cls)?' on':'';
+        h+='<button class="chip'+on+'" data-class="'+esc(classes[i])+'">'+esc(classes[i])+'</button>';
+      }
+    }
+    box.innerHTML=h;
+    var bs=box.querySelectorAll('[data-class]');
+    for(var k=0;k<bs.length;k++){
+      bs[k].addEventListener('click', function(){ state.hwClass=this.getAttribute('data-class'); refreshAll(); });
+    }
+  }
+  var ch = cls ? getClassHW(cls,state.date) : {chinese:'',math:''};
+  $('hwChinese').value = ch.chinese||'';
+  $('hwMath').value = ch.math||'';
+  $('btnSaveHw').disabled = !cls;
+  $('btnSaveHw').style.opacity = cls ? '1' : '.5';
+  if($('hwSaveTxt')) $('hwSaveTxt').textContent = cls ? ('保存「'+cls+'」今日作业') : '请先选择班级';
+  $('hwChinese').placeholder = cls ? '例：抄写第3课生字 2 遍 + 背诵《山行》' : '请先选择班级';
+  $('hwMath').placeholder = cls ? '例：口算本 P12、练习册 P8-9' : '请先选择班级';
+}
+/* 各班级作业查看窗口：按班级展示当日语文/数学作业 */
+function renderHwClassView(){
+  var box=$('hwClassView'); if(!box) return;
+  var d=state.date;
+  if($('hwViewDateTxt')) $('hwViewDateTxt').textContent=cnDate(d);
+  var classes=classList();
+  if(!classes.length){
+    box.innerHTML='<p class="hint">还没有班级。给学生在「学生」页填写「年级」后即自动成为班级（如：三年级），可在此按班级统一录入作业。</p>';
+    return;
+  }
+    var h='<div class="cls-hw-list">';
+  for(var i=0;i<classes.length;i++){
+    var cls=classes[i];
+    var list=studentsInClass(cls);
+    h+='<div class="cls-hw" data-cls="'+esc(cls)+'">'
+      +'<span class="cls-hw-name">'+esc(cls)+'</span>'
+      +'<span class="cls-hw-count">'+list.length+' 人</span>'
+      +'<svg class="cls-hw-go" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      +'</div>';
+  }
+  h+='</div>';
+  box.innerHTML=h;
+  var cards=box.querySelectorAll('[data-cls]');
+  for(var k=0;k<cards.length;k++){
+    cards[k].addEventListener('click', function(){ openClassHw(this.getAttribute('data-cls')); });
+  }
+}
+
+function openClassHw(cls){
+  var d=state.date;
+  var ch=getClassHW(cls,d);
+  var list=studentsInClass(cls);
+  var cn = ch.chinese ? esc(ch.chinese) : '<span class="hw-empty">今天还没录入语文作业</span>';
+  var mt = ch.math ? esc(ch.math) : '<span class="hw-empty">今天还没录入数学作业</span>';
+  var names = list.length ? list.map(function(s){return esc(s.name);}).join('、') : '该班级暂无学生';
+  var h='<div class="modal-head"><h3>'+esc(cls)+' · 作业详情</h3>'
+    +'<button class="close-btn" data-close><svg class="svgi" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>';
+  h+='<div class="dsec"><h4><svg class="svgi" viewBox="0 0 24 24"><rect x="3" y="6" width="15" height="14" rx="2" fill="#fff8e6" stroke="currentColor" stroke-width="1.5"/><path d="M3 10h15M7 6V3M14 6V3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="19" cy="8" r="3" fill="#ffb300" stroke="currentColor" stroke-width="1"/></svg>'+cnDate(d)+' 作业</h4>'
+    +'<div class="hw2">'
+    +'<div class="hw-card hw-cn"><div class="hw-head"><svg class="svgi" viewBox="0 0 24 24"><rect x="3" y="6" width="15" height="14" rx="2" fill="#fff8e6" stroke="currentColor" stroke-width="1.5"/><path d="M3 10h15M7 6V3M14 6V3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="19" cy="8" r="3" fill="#ffb300" stroke="currentColor" stroke-width="1"/></svg>语文</div><div class="hw-body">'+cn+'</div></div>'
+    +'<div class="hw-card hw-math"><div class="hw-head"><svg class="svgi" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M10 9v12"/></svg>数学</div><div class="hw-body">'+mt+'</div></div>'
+    +'</div></div>';
+  h+='<div class="dsec"><h4><svg class="svgi" viewBox="0 0 24 24"><circle cx="9" cy="7" r="3" fill="#ffb300" stroke="currentColor" stroke-width="1.3"/><path d="M3.5 20c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg>已同步到（'+list.length+' 人）</h4><p>'+names+'</p></div>';
+  h+='<div class="modal-actions"><button class="btn btn-ghost" data-close>关闭</button></div>';
+  var body=$('classHwBody'); body.innerHTML=h;
+  var closers=body.querySelectorAll('[data-close]');
+  for(var i=0;i<closers.length;i++){
+    closers[i].addEventListener('click', function(){ closeMask('maskClassHw'); });
+  }
+  openMask('maskClassHw');
 }
 
 function renderBackupTip(){
@@ -1052,27 +1181,41 @@ function renderSideStat(){
 function renderHwDayHint(){
   var box=$('hwDayHint'); if(!box) return;
   var d=state.date;
-  var n=countHWOn(d);
-  if(n>0){ box.innerHTML='<div class="day-hint ok">当日已保存 '+n+' 条作业记录</div>'; return; }
-  var prev=shiftDate(d,-1), pn=countHWOn(prev);
+  var n=countClassHWOn(d);
+  if(n>0){ box.innerHTML='<div class="day-hint ok">当日已保存 '+n+' 个班级作业</div>'; return; }
+  var prev=shiftDate(d,-1), pn=countClassHWOn(prev);
   if(pn>0){
-    box.innerHTML='<div class="day-hint">'+cnDate(d)+'暂无记录'
-      + '<button class="btn btn-ghost sm" id="btnCopyPrev">从'+cnDate(prev)+'复制 '+pn+' 条</button></div>';
+    box.innerHTML='<div class="day-hint">'+cnDate(d)+'暂无班级作业'
+      + '<button class="btn btn-ghost btn-sm" id="btnCopyPrev">从'+cnDate(prev)+'复制 '+pn+' 个班级</button></div>';
     var b=$('btnCopyPrev');
-    if(b) b.addEventListener('click', function(){ copyDay(prev, d); });
+    if(b) b.addEventListener('click', function(){ copyClassDay(prev, d); });
   } else box.innerHTML='';
 }
-function copyDay(from, to){
-  var n=0;
-  for(var i=0;i<DB.students.length;i++){
-    var id=DB.students[i].id;
-    var src=DB.homework[recKey(id, from)];
-    if(src && (src.chinese||src.math) && !DB.homework[recKey(id, to)]){
-      DB.homework[recKey(id, to)]={chinese:src.chinese||'', math:src.math||''}; n++;
+function countClassHWOn(date){
+  var n=0, suf='|'+date, len=suf.length;
+  for(var k in DB.classHomework){
+    if(k.length>=len && k.slice(-len)===suf){
+      var r=DB.classHomework[k];
+      if(r && (r.chinese||r.math)) n++;
     }
   }
-  saveData(); refreshAll();
-  toast(n ? ('已复制 '+n+' 条作业到'+cnDate(to)) : '没有可复制的记录');
+  return n;
+}
+function copyClassDay(from, to){
+  var n=0, suf='|'+from, len=suf.length;
+  for(var k in DB.classHomework){
+    if(k.length>=len && k.slice(-len)===suf){
+      var cls=k.slice(0, k.length-len);
+      if(!DB.classHomework[recKey(cls,to)]){
+        var src=DB.classHomework[k];
+        DB.classHomework[recKey(cls,to)]={chinese:src.chinese||'', math:src.math||''};
+        syncClassToStudents(cls,to);
+        n++;
+      }
+    }
+  }
+  if(n){ saveData(); refreshAll(); toast('已复制 '+n+' 个班级作业到'+cnDate(to)); }
+  else toast('没有可复制的记录');
 }
 function renderAppAvatar(){
   var el=$('navAvatar'); if(!el) return;
@@ -1086,10 +1229,13 @@ function refreshAll(){
   if(!state.curId || !studentById(state.curId)){
     state.curId = DB.students.length ? DB.students[0].id : null;
   }
+  var cls=classList();
+  if(!state.hwClass || cls.indexOf(state.hwClass)<0){ state.hwClass = cls.length ? cls[0] : null; }
   renderSkinPicker();
   renderGrid();
   renderChips();
   renderHwPanel();
+  renderHwClassView();
   renderGradesPanel();
   renderExamManage();
   renderGradesSummary();
@@ -1131,15 +1277,19 @@ function paintFormAvatar(name){
 function saveStuForm(){
   var name=$('fName').value.trim();
   if(!name){ toast('请填写学生姓名'); return; }
+  var target;
   if(editId){
-    var s=studentById(editId);
-    s.name=name; s.grade=$('fGrade').value.trim(); s.photo=formPhoto;
+    target=studentById(editId);
+    target.name=name; target.grade=$('fGrade').value.trim(); target.photo=formPhoto;
     toast('已更新 '+name);
   }else{
-    DB.students.push({id:uid(),name:name,grade:$('fGrade').value.trim(),photo:formPhoto});
-    state.curId=DB.students[DB.students.length-1].id;
+    target={id:uid(),name:name,grade:$('fGrade').value.trim(),photo:formPhoto};
+    DB.students.push(target);
+    state.curId=target.id;
     toast('已添加 '+name);
   }
+  // 若该学生有所属班级，且当日已有班级作业，则同步一份到其个人作业记录
+  if(target.grade) syncStudentToClass(target.id, state.date);
   saveData(); closeMask('maskStu'); refreshAll();
 }
 function confirmDelStudent(id){
@@ -1298,7 +1448,7 @@ function doImport(file){
     try{
       var o=JSON.parse(fr.result);
       if(!o || !o.students) throw new Error('bad');
-      DB=o; DB.homework=DB.homework||{}; DB.grades=DB.grades||{}; DB.examTypes=DB.examTypes||['单元测试','期中考试','期末考试']; DB.meta=DB.meta||{};
+      DB=o; DB.homework=DB.homework||{}; DB.classHomework=DB.classHomework||{}; DB.grades=DB.grades||{}; DB.examTypes=DB.examTypes||['单元测试','期中考试','期末考试']; DB.meta=DB.meta||{};
       state.curId=null; saveData(); refreshAll(); toast('已导入 '+DB.students.length+' 名学生的数据');
     }catch(e){ toast('文件格式不对，请选择本工作台导出的 JSON'); }
   };
@@ -1334,10 +1484,13 @@ function bindEvents(){
   });
 
   $('btnSaveHw').addEventListener('click', function(){
-    if(!state.curId){ toast('先选择一名学生'); return; }
-    DB.homework[recKey(state.curId,state.date)] = {
-      chinese:$('hwChinese').value.trim(), math:$('hwMath').value.trim() };
-    saveData(); refreshAll(); toast('作业已保存');
+    if(!state.hwClass){ toast('请先选择班级'); return; }
+    var cls=state.hwClass, date=state.date;
+    var cn=$('hwChinese').value.trim(), mt=$('hwMath').value.trim();
+    DB.classHomework[recKey(cls,date)] = {chinese:cn, math:mt};
+    syncClassToStudents(cls,date);
+    saveData(); refreshAll();
+    toast('已保存「'+cls+'」作业（'+studentsInClass(cls).length+' 名学生）');
   });
   $('btnSaveGd').addEventListener('click', function(){
     if(!state.curId){ toast('先选择一名学生'); return; }
