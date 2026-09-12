@@ -300,7 +300,6 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
 .cls-hw:hover{background:#fffaf0;box-shadow:0 6px 16px rgba(120,80,40,.10);border-color:#ffd97a}
 .cls-hw:active{background:#fff4e0}
 .cls-hw-name{flex:1;min-width:0;font-weight:800;font-size:14px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cls-hw-count{flex:0 0 auto;font-size:12px;font-weight:600;color:var(--text-3);background:#faf7f1;border:1px solid var(--line);border-radius:999px;padding:2px 9px}
 .cls-hw-go{flex:0 0 auto;width:16px;height:16px;color:var(--primary)}
 .week{display:flex;gap:5px;margin-top:8px}
 .week div{flex:1;text-align:center}
@@ -1101,7 +1100,6 @@ function renderHwClassView(){
     var list=studentsInClass(cls);
     h+='<div class="cls-hw" data-cls="'+esc(cls)+'">'
       +'<span class="cls-hw-name">'+esc(cls)+'</span>'
-      +'<span class="cls-hw-count">'+list.length+' 人</span>'
       +'<svg class="cls-hw-go" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
       +'</div>';
   }
